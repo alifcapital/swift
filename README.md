@@ -2,8 +2,9 @@
 This package is written to cover low level stuff for integration with [SWIFT Payments](https://swift.com).
 All code is written according to specification from [Developers API](https://developer.swift.com/api), 
 checkout the link to discover more. For the moment package implements following:
-- [x] Authorization (Basic, OAuth token)
-- [x] Pre-Validation API
+- [x] [Authentication](https://developer.swift.com/oauth-reference#section/Authentication)
+- [x] [Pre-Validation](https://developer.swift.com/api/prevalidation/overview)
+- [x] [SWIFTRef](https://developer.swift.com/api/swiftref/overview)
 
 ## INSTALL
 ```bash
