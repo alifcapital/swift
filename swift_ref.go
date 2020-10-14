@@ -29,9 +29,9 @@ type ContactDetails struct {
 	WebAddress   string `json:"web_address"`
 }
 
-// DetailsOfBik - returned in response to request of details with only one value, BIK number
+// DetailsOfBic - returned in response to request of details with only one value, BIK number
 // https://developer.swift.com/reference#tag/bics
-type DetailsOfBik struct {
+type DetailsOfBic struct {
 	// The BIC of the institution on which more information is requested
 	Bic string `json:"bic"`
 	// Name by which a party is known and which is usually used to identify that party
@@ -49,7 +49,7 @@ type DetailsOfBik struct {
 }
 
 // GetDetailsOfBic - implements https://developer.swift.com/reference#tag/bics specifications
-func GetDetailsOfBic(bic string, ctx context.Context, xApiKey string, e env) (*DetailsOfBik, error) {
+func GetDetailsOfBic(bic string, ctx context.Context, xApiKey string, e env) (*DetailsOfBic, error) {
 	// create a new http-request instance
 	req, err := http.NewRequest(http.MethodGet, getBikDetailsUrl(e, bic), nil)
 	if err != nil {
@@ -81,7 +81,7 @@ func GetDetailsOfBic(bic string, ctx context.Context, xApiKey string, e env) (*D
 	}
 
 	// parse response and return details
-	details := DetailsOfBik{}
+	details := DetailsOfBic{}
 	if err := json.Unmarshal(b.Bytes(), &details); err != nil {
 		return nil, err
 	}

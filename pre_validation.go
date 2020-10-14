@@ -269,7 +269,7 @@ type response struct {
 // lauVersion - "1.0"
 // lauHmacKey - key for generating hmac signature
 // appApiKey - part of `LAUSigned` header
-// xbic - part of `LAUSigned` header && x-bik header
+// xbic - part of `LAUSigned` header && x-bic header
 // xApiKey - {{consumer-key}} for
 func NewVerificationRequest(
 	verReqSchema *VerificationRequestSchema,
@@ -414,7 +414,7 @@ func makeLauSignature(
 // lauVersion - "1.0"
 // lauHmacKey - key for generating hmac signature
 // appApiKey - part of `LAUSigned` header
-// xbic - part of `LAUSigned` header && x-bik header
+// xbic - part of `LAUSigned` header && x-bic header
 // xApiKey - {{consumer-key}} for
 func PerformPreValidationCheck(
 	verReq *VerificationRequestSchema,
