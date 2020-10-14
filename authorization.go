@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -97,8 +95,7 @@ func invokeAccessToken(data url.Values, creds *AuthorizationCredentials, ctx con
 
 	// handle non 200 code
 	if resp.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("request failed with status: %d, with message: %s", resp.StatusCode, b.String())
-		return nil, errors.New(msg)
+		return nil, NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
 
 	// parse response to appropriate struct
@@ -162,9 +159,7 @@ func revokeToken(data url.Values, creds *AuthorizationCredentials, ctx context.C
 			return err
 		}
 
-		msg := fmt.Sprintf("request failed with status: %d, with message: %s", resp.StatusCode, b.String())
-		return errors.New(msg)
+		return NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
-
 	return nil
 }

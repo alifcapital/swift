@@ -9,4 +9,5 @@
   "app_api_key": "<replace with `LAUSigned` value from https://developer.swift.com/reference#operation/VerifyAccount>",
   "xbic": "<replace with `LAUSigned` value from https://developer.swift.com/reference#operation/VerifyAccount>",
   "x_api_key": "<replace with consumer-key from the app you created>"
+  "real_bic": "<enter_any_real_bik_identifier>",
 }

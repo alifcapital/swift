@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path"
@@ -23,6 +24,7 @@ type testsConfig struct {
 	AppApiKey     string `json:"app_api_key"`
 	Xbic          string `json:"xbic"`
 	XApiKey       string `json:"x_api_key"`
+	RealBic       string `json:"real_bic"`
 }
 
 // newTestsConfig - read file and make tests configs
@@ -40,21 +42,16 @@ func newTestsConfig() *testsConfig {
 	return &tc
 }
 
+
 // validateAccessTokenFields - check lifetimes and type of token
 func validateAccessTokenFields(t *testing.T, token *AccessToken) {
 	expectedTokenTime := fmt.Sprintf("%d", (60*30)-1) // 30 min
-	if token.ExpiresIn != expectedTokenTime {
-		t.Errorf("unexpected `ExpiresIn`, expected: %s, got: %s", expectedTokenTime, token.RefreshTokenExpiresIn)
-	}
+	assert.Equal(t, token.ExpiresIn, expectedTokenTime)
 
 	expectedExpRefreshTime := fmt.Sprintf("%d", (60*60*24)-1) // 1 day
-	if token.RefreshTokenExpiresIn != expectedExpRefreshTime {
-		t.Errorf("unexpected `RefreshTokenExpiresIn`, expected: %s, got: %s", expectedExpRefreshTime, token.RefreshTokenExpiresIn)
-	}
+	assert.Equal(t, token.RefreshTokenExpiresIn, expectedExpRefreshTime)
 
-	if token.TokenType != "Bearer" {
-		t.Errorf("accessToken must be a `Bearer` type in switf OAuth APIs")
-	}
+	assert.Equal(t, token.TokenType, "Bearer")
 }
 
 // ------------------------------------------------------------------
@@ -71,18 +68,15 @@ func TestGetAccessToken(t *testing.T) {
 
 	// sends request to SWIFT api, returns new access token instance
 	accessToken, err := GetAccessToken(creds, ctx, e)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 
 	// assert expectations
 	validateAccessTokenFields(t, accessToken)
 
 	// after performing tests, it would be a good idea to `remove` token
 	// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-	if err := RevokeAccessToken(accessToken, creds, ctx, e); err != nil {
-		t.Fatal(err)
-	}
+	err = RevokeAccessToken(accessToken, creds, ctx, e)
+	assert.Nil(t, err)
 }
 
 // TestRefreshAccessToken - test refreshing access token
@@ -97,28 +91,22 @@ func TestRefreshAccessToken(t *testing.T) {
 
 	// sends request to SWIFT api, returns new access token instance
 	accessToken, err := GetAccessToken(creds, ctx, e)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 
 	// try to refresh accessToken
 	refreshedToken, err := RefreshAccessToken(accessToken, creds, ctx, e)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 
 	// assert expectations
 	validateAccessTokenFields(t, refreshedToken)
 
 	// after validating fields clean-up token
 	// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-	if err := RevokeRefreshToken(refreshedToken, creds, ctx, e); err != nil {
-		t.Fatal(err)
-	}
+	err = RevokeRefreshToken(refreshedToken, creds, ctx, e)
+	assert.Nil(t, err)
 
 	// NOTE: original access token is not valid after refreshing it
 	// and server error will be returned
-	if err := RevokeAccessToken(accessToken, creds, ctx, e); err == nil {
-		t.Fatal("expected error but got nil")
-	}
+	 err = RevokeAccessToken(accessToken, creds, ctx, e)
+	 assert.Error(t, err)
 }

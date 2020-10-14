@@ -4,7 +4,7 @@ All code is written according to specification from [Developers API](https://dev
 checkout the link to discover more. For the moment package implements following:
 - [x] [Authentication](https://developer.swift.com/oauth-reference#section/Authentication)
 - [x] [Pre-Validation](https://developer.swift.com/api/prevalidation/overview)
-- [x] [SWIFTRef](https://developer.swift.com/api/swiftref/overview)
+- [ ] [SWIFTRef](https://developer.swift.com/api/swiftref/overview)
 
 ## INSTALL
 ```bash

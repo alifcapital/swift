@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -25,9 +25,7 @@ func newVerificationReqSchema(t *testing.T, uetr string) *VerificationRequestSch
 		"BANABEBB",
 		"",
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	return reqBody
 }
 
@@ -54,12 +52,8 @@ func TestNewVerificationRequestSchema(t *testing.T) {
 		CreditorAgentBranchIdentification:  "",
 	}
 
-	if !reflect.DeepEqual(&expected, reqSchema) {
-		t.Fatalf("expected:\t%v\ngot:\t%v", expected, reqSchema)
-	}
+	assert.Equal(t, &expected, reqSchema)
 }
-
-// ------------------------------------------------------------------
 
 func TestNewVerificationRequest_Fails(t *testing.T) {
 	uetr := uuid.New().String()
@@ -77,9 +71,8 @@ func TestNewVerificationRequest_Fails(t *testing.T) {
 		"",
 		"",
 	)
-	if err == nil || !errors.Is(err, ErrCorrelationIdentifierOutOfRange) {
-		t.Fatalf("expected err: ErrCorrelationIdentifierOutOfRange")
-	}
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, ErrCorrelationIdentifierOutOfRange))
 
 	_, err = NewVerificationRequestSchema(
 		"uuid-or-any-string-from-1-to-50-symbols",
@@ -95,9 +88,8 @@ func TestNewVerificationRequest_Fails(t *testing.T) {
 		"",
 		"",
 	)
-	if err == nil || !errors.Is(err, ErrCreditorAccountOutOfRange) {
-		t.Fatalf("expected err: ErrCreditorAccountOutOfRange")
-	}
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, ErrCreditorAccountOutOfRange))
 
 	_, err = NewVerificationRequestSchema(
 		"uuid-or-any-string-from-1-to-50-symbols",
@@ -113,12 +105,9 @@ func TestNewVerificationRequest_Fails(t *testing.T) {
 		"",
 		"",
 	)
-	if err == nil || !errors.Is(err, ErrCreditorNameOutOfRange) {
-		t.Fatalf("expected err: ErrCreditorNameOutOfRange")
-	}
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, ErrCreditorNameOutOfRange))
 }
-
-// ------------------------------------------------------------------
 
 func TestNewVerificationRequest(t *testing.T) {
 	uetr := uuid.New().String()
@@ -137,14 +126,10 @@ func TestNewVerificationRequest(t *testing.T) {
 		conf.XApiKey,
 		SandBoxEnv,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 
 	reqSchemaJson, err := json.Marshal(reqSchema)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	signature := makeLauSignature(
 		conf.LauAppId,
 		httpReq.Header.Get("LAUCallTime"),
@@ -155,19 +140,11 @@ func TestNewVerificationRequest(t *testing.T) {
 		conf.LauHmacKey,
 		reqSchemaJson,
 	)
-	if !hmac.Equal([]byte(signature), []byte(httpReq.Header.Get("LAUSignature"))) {
-		t.Fatalf("LAUSignature not correct")
-	}
+	assert.True(t, hmac.Equal([]byte(signature), []byte(httpReq.Header.Get("LAUSignature"))))
 
-	if conf.LauAppId != httpReq.Header.Get("LAUApplicationID") {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "001", httpReq.Header.Get("LAUApplicationID"))
-	}
-	if conf.LauVersion != httpReq.Header.Get("LAUVersion") {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "001", httpReq.Header.Get("LAUVersion"))
-	}
-	if lauReqNonce != httpReq.Header.Get("LAURequestNonce") {
-		t.Fatalf("expected:\t%s\ngot:\t%s", lauReqNonce, httpReq.Header.Get("LAURequestNonce"))
-	}
+	assert.Equal(t, conf.LauAppId, httpReq.Header.Get("LAUApplicationID"))
+	assert.Equal(t, conf.LauVersion, httpReq.Header.Get("LAUVersion"))
+	assert.Equal(t, lauReqNonce, httpReq.Header.Get("LAURequestNonce"))
 }
 
 func TestPerformPreValidationCheck(t *testing.T) {
@@ -189,26 +166,12 @@ func TestPerformPreValidationCheck(t *testing.T) {
 		config.XApiKey,
 		e,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 
-	if verReq.CorrelationIdentifier != verResp.CorrelationIdentifier {
-		t.Fatalf("expected:\t%s\ngot:\t%s", verReq.CorrelationIdentifier, verResp.CorrelationIdentifier)
-	}
-	if "PASS" != verResp.Response.AccountValidationStatus {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "PASS", verResp.Response.AccountValidationStatus)
-	}
-	if "MTCH" != verResp.Response.CreditorAccountMatch {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "MTCH", verResp.Response.CreditorAccountMatch)
-	}
-	if "NOAP" != verResp.Response.CreditorNameMatch {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "NOAP", verResp.Response.CreditorNameMatch)
-	}
-	if "NOAP" != verResp.Response.CreditorAddressMatch {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "NOAP", verResp.Response.CreditorAddressMatch)
-	}
-	if "NOAP" != verResp.Response.CreditorOrganisationIdentificationMatch {
-		t.Fatalf("expected:\t%s\ngot:\t%s", "NOAP", verResp.Response.CreditorOrganisationIdentificationMatch)
-	}
+	assert.Equal(t, verReq.CorrelationIdentifier, verResp.CorrelationIdentifier)
+	assert.Equal(t, "PASS", verResp.Response.AccountValidationStatus)
+	assert.Equal(t, "MTCH", verResp.Response.CreditorAccountMatch)
+	assert.Equal(t, "NOAP", verResp.Response.CreditorNameMatch)
+	assert.Equal(t, "NOAP", verResp.Response.CreditorAddressMatch)
+	assert.Equal(t, "NOAP", verResp.Response.CreditorOrganisationIdentificationMatch)
 }

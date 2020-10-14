@@ -536,8 +536,7 @@ func PerformPreValidationCheck(
 
 	// check for status-code being 200
 	if resp.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("request failed with status: %d, with message: %s", resp.StatusCode, b.String())
-		return nil, errors.New(msg)
+		return nil, NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
 
 	// parse response to appropriate structure
@@ -545,6 +544,5 @@ func PerformPreValidationCheck(
 	if err := json.Unmarshal(b.Bytes(), &verResp); err != nil {
 		return nil, err
 	}
-
 	return &verResp, nil
 }
