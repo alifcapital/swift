@@ -7,34 +7,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 const CRLF = "\r\n"
-
-var (
-	ErrCorrelationIdentifierOutOfRange = errors.New("correlation_identifier must be between 1 and 50 chars")
-	ErrCreditorAccountOutOfRange       = errors.New("creditor_account must be between 1 and 34 chars")
-	ErrCreditorNameOutOfRange          = errors.New("creditor_name must be between 1 and 140")
-	ErrInvalidCountryName              = errors.New("creditor_address country is not valid")
-	ErrAddressLineOutOfRange           = errors.New("creditor_address address_line max length is 70")
-	ErrPostCodeOutOfRange              = errors.New("creditor_address post_code must be between 1 and 16 chars")
-	ErrTownNameOutOfRange              = errors.New("creditor_address town_name max length is 35")
-	ErrInvalidAnyBic                   = errors.New("creditor_organisation_identification any_bic is not valid")
-	ErrInvalidBicfi                    = errors.New("creditor_agent bicfi is not valid")
-	ErrCabiOutOfRange                  = errors.New("creditor_agent_branch_identification max length is 35")
-
-	reCounty = regexp.MustCompile(`^[A-Z]{2,2}$`)
-	reAnyBic = regexp.MustCompile(`^[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}$`)
-	reBicfi  = regexp.MustCompile(`^[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}$`)
-)
 
 // VerificationRequestSchema - this data send to endpoint to get information about SWIFT account
 // not all fields required, same fields that not going to be used at all not implemented to save some time
@@ -177,72 +157,7 @@ func NewVerificationRequestSchema(
 	anyBic,
 	bicfi,
 	creditorAgentBranchIdentification string,
-) (*VerificationRequestSchema, error) {
-	// required
-	correlCount := utf8.RuneCountInString(correlationIdentifier)
-	if 1 > correlCount || correlCount > 50 {
-		return nil, ErrCorrelationIdentifierOutOfRange
-	}
-
-	// optional
-	if uetr != "" {
-		_, err := uuid.Parse(uetr)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// required
-	creditorAccLength := utf8.RuneCountInString(creditorAccount)
-	if 1 > creditorAccLength || creditorAccLength > 34 {
-		return nil, ErrCreditorAccountOutOfRange
-	}
-
-	// required
-	creditorNameLength := utf8.RuneCountInString(creditorName)
-	if 1 > creditorNameLength || creditorNameLength > 140 {
-		return nil, ErrCreditorNameOutOfRange
-	}
-
-	// optional
-	if country != "" && !reCounty.MatchString(country) {
-		return nil, ErrInvalidCountryName
-	}
-
-	// optional
-	addressLineLength := utf8.RuneCountInString(addressLine)
-	if addressLine != "" && addressLineLength > 70 {
-		return nil, ErrAddressLineOutOfRange
-	}
-
-	// optional
-	postCodeLength := utf8.RuneCountInString(postCode)
-	if postCode != "" && (1 > postCodeLength || postCodeLength > 16) {
-		return nil, ErrPostCodeOutOfRange
-	}
-
-	// optional
-	townNameLength := utf8.RuneCountInString(townName)
-	if townName != "" && (townNameLength > 35) {
-		return nil, ErrTownNameOutOfRange
-	}
-
-	// optional
-	if anyBic != "" && !reAnyBic.MatchString(anyBic) {
-		return nil, ErrInvalidAnyBic
-	}
-
-	// optional
-	if bicfi != "" && !reBicfi.MatchString(bicfi) {
-		return nil, ErrInvalidBicfi
-	}
-
-	// optional
-	cabiLength := utf8.RuneCountInString(creditorAgentBranchIdentification)
-	if creditorAgentBranchIdentification != "" && cabiLength > 35 {
-		return nil, ErrCabiOutOfRange
-	}
-
+) *VerificationRequestSchema {
 	return &VerificationRequestSchema{
 		CorrelationIdentifier: correlationIdentifier,
 		Context:               string(verificationCtx),
@@ -258,7 +173,7 @@ func NewVerificationRequestSchema(
 		CreditorOrganisationIdentification: CreditorOrganisationIdentification{AnyBic: anyBic},
 		CreditorAgent:                      CreditorAgent{Bicfi: bicfi},
 		CreditorAgentBranchIdentification:  creditorAgentBranchIdentification,
-	}, nil
+	}
 }
 
 // ------------------------------------------------------------------

@@ -20,7 +20,7 @@ Official Swift Developer Portal https://developer.swift.com/reference. See tests
 go test -cover
 
 // to see coverage details
-go tool cover -html tests.cover
+go test . -coverprofile tests.cover && go tool cover -html tests.cover && rm tests.cover
 ```
 
 ## Contributing

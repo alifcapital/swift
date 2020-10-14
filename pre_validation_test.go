@@ -4,14 +4,13 @@ import (
 	"context"
 	"crypto/hmac"
 	"encoding/json"
-	"errors"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func newVerificationReqSchema(t *testing.T, uetr string) *VerificationRequestSchema {
-	reqBody, err := NewVerificationRequestSchema(
+	reqBody := NewVerificationRequestSchema(
 		"SCENARIO1-CORRID-001",
 		VerCtxPAYM,
 		uetr,
@@ -25,7 +24,6 @@ func newVerificationReqSchema(t *testing.T, uetr string) *VerificationRequestSch
 		"BANABEBB",
 		"",
 	)
-	assert.Nil(t, err)
 	return reqBody
 }
 
@@ -53,60 +51,6 @@ func TestNewVerificationRequestSchema(t *testing.T) {
 	}
 
 	assert.Equal(t, &expected, reqSchema)
-}
-
-func TestNewVerificationRequest_Fails(t *testing.T) {
-	uetr := uuid.New().String()
-	_, err := NewVerificationRequestSchema(
-		"",
-		VerCtxPAYM,
-		uetr,
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	)
-	assert.Error(t, err)
-	assert.True(t, errors.Is(err, ErrCorrelationIdentifierOutOfRange))
-
-	_, err = NewVerificationRequestSchema(
-		"uuid-or-any-string-from-1-to-50-symbols",
-		VerCtxPAYM,
-		uetr,
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	)
-	assert.Error(t, err)
-	assert.True(t, errors.Is(err, ErrCreditorAccountOutOfRange))
-
-	_, err = NewVerificationRequestSchema(
-		"uuid-or-any-string-from-1-to-50-symbols",
-		VerCtxPAYM,
-		uetr,
-		"ВНот-1-до-34-символов-ыц;Ы!ЫЦЧФБЬЫ",
-		"ВНот-max-140-символов-ыц;Ы!ЫЦЧФБЬЫВНот-1-до-34-символов-ыц;Ы!ЫЦЧФБЬЫВНот-1-до-34-символов-ыц;Ы!ЫЦЧФБЬЫВНот-1-до-34-символов-ыц;Ы!ЫЦЧФБЬЫВНот-1-до-34-символов-ыц;Ы!ЫЦЧФБЬЫ",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	)
-	assert.Error(t, err)
-	assert.True(t, errors.Is(err, ErrCreditorNameOutOfRange))
 }
 
 func TestNewVerificationRequest(t *testing.T) {
