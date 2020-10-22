@@ -1,5 +1,5 @@
 // SWIFTRef API (1.6.0)
-package swift_sdk
+package swift
 
 import (
 	"bytes"

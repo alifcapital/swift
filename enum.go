@@ -1,4 +1,4 @@
-package swift_sdk
+package swift
 
 // env - sandbox (testing) or production
 // choose from options below (const list)

@@ -1,4 +1,4 @@
-package swift_sdk
+package swift
 
 import (
 	"github.com/stretchr/testify/assert"

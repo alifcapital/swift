@@ -1,4 +1,4 @@
-package swift_sdk
+package swift
 
 func getAccessTokenUrl(e env) string {
 	if e == ProductionEnv {

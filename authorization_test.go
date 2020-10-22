@@ -1,4 +1,4 @@
-package swift_sdk
+package swift
 
 import (
 	"context"
@@ -44,7 +44,7 @@ func newTestsConfig() *testsConfig {
 
 
 // validateAccessTokenFields - check lifetimes and type of token
-func validateAccessTokenFields(t *testing.T, token *AccessToken) {
+func validateAccessTokenFields(t *testing.T, token *AuthenticationTokens) {
 	expectedTokenTime := fmt.Sprintf("%d", (60*30)-1) // 30 min
 	assert.Equal(t, token.ExpiresIn, expectedTokenTime)
 
@@ -56,45 +56,44 @@ func validateAccessTokenFields(t *testing.T, token *AccessToken) {
 
 // ------------------------------------------------------------------
 
-// TestGetAccessToken - testing https://developer.swift.com/oauth-reference#operation/getAccessToken
-func TestGetAccessToken(t *testing.T) {
+// TestInvokeAuthTokens - testing https://developer.swift.com/oauth-reference#operation/getAccessToken
+func TestInvokeAuthTokens(t *testing.T) {
 	// grab configs
 	conf := newTestsConfig()
 
 	// make credentials instance
-	creds := NewAuthorizationCredentials(conf.BasicAuthUser, conf.BasicAuthPass, conf.UserName, conf.Password)
+	creds := NewAppCredentials(conf.BasicAuthUser, conf.BasicAuthPass, conf.UserName, conf.Password)
 	ctx := context.Background()
 	e := SandBoxEnv
 
 	// sends request to SWIFT api, returns new access token instance
-	accessToken, err := GetAccessToken(creds, ctx, e)
+	authToken, err := InvokeAuthTokens(creds, ctx, e)
 	assert.Nil(t, err)
 
 	// assert expectations
-	validateAccessTokenFields(t, accessToken)
+	validateAccessTokenFields(t, authToken)
 
 	// after performing tests, it would be a good idea to `remove` token
 	// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-	err = RevokeAccessToken(accessToken, creds, ctx, e)
+	err = RevokeAccessToken(authToken, creds, ctx, e)
 	assert.Nil(t, err)
 }
 
-// TestRefreshAccessToken - test refreshing access token
-func TestRefreshAccessToken(t *testing.T) {
+func TestRefreshAuthTokens(t *testing.T) {
 	// grab configs
 	conf := newTestsConfig()
 
 	// make credentials instance
-	creds := NewAuthorizationCredentials(conf.BasicAuthUser, conf.BasicAuthPass, conf.UserName, conf.Password)
+	creds := NewAppCredentials(conf.BasicAuthUser, conf.BasicAuthPass, conf.UserName, conf.Password)
 	ctx := context.Background()
 	e := SandBoxEnv
 
 	// sends request to SWIFT api, returns new access token instance
-	accessToken, err := GetAccessToken(creds, ctx, e)
+	authTokens, err := InvokeAuthTokens(creds, ctx, e)
 	assert.Nil(t, err)
 
-	// try to refresh accessToken
-	refreshedToken, err := RefreshAccessToken(accessToken, creds, ctx, e)
+	// try to refresh authTokens
+	refreshedToken, err := RefreshAuthTokens(authTokens, creds, ctx, e)
 	assert.Nil(t, err)
 
 	// assert expectations
@@ -107,6 +106,6 @@ func TestRefreshAccessToken(t *testing.T) {
 
 	// NOTE: original access token is not valid after refreshing it
 	// and server error will be returned
-	 err = RevokeAccessToken(accessToken, creds, ctx, e)
+	 err = RevokeAccessToken(authTokens, creds, ctx, e)
 	 assert.Error(t, err)
 }
