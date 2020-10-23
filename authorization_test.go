@@ -29,7 +29,7 @@ type testsConfig struct {
 
 // newTestsConfig - read file and make tests configs
 func newTestsConfig() *testsConfig {
-	testFilePath := path.Join(os.Getenv("GOPATH"), "src/github.com/alifcapital/swift_sdk/tests.json")
+	testFilePath := path.Join(os.Getenv("GOPATH"), "src/github.com/alifcapital/swift/tests.json")
 	fileContent, err := ioutil.ReadFile(testFilePath)
 	if err != nil {
 		panic(err)
