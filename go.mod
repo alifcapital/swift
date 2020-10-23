@@ -1,4 +1,4 @@
-module github.com/alifcapital/swift_sdk
+module github.com/alifcapital/swift
 
 go 1.14
 
