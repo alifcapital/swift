@@ -49,6 +49,8 @@ type DetailsOfBic struct {
 }
 
 // GetDetailsOfBic - implements https://developer.swift.com/reference#tag/bics specifications
+// bic - target bic
+// xApiKey - {{consumer-key}}
 func GetDetailsOfBic(bic string, ctx context.Context, xApiKey string, e env) (*DetailsOfBic, error) {
 	// create a new http-request instance
 	req, err := http.NewRequest(http.MethodGet, getBikDetailsUrl(e, bic), nil)
