@@ -8,7 +8,7 @@ checkout the link to discover more. For the moment package implements following:
 
 ## INSTALL
 ```bash
-go get github.com/alifcapital/swift_sdk
+go get github.com/alifcapital/swift
 ```
 
 ## DOCS
