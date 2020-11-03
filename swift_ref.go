@@ -8,20 +8,20 @@ import (
 	"net/http"
 )
 
-// Address - address information
+// Address - address information of financial institution by BIC number
 type Address struct {
 	AddressLines       []string `json:"address_lines"`
 	PostOfficeBox      string   `json:"post_office_box"`
 	TownName           string   `json:"town_name"`
 	CountrySubdivision string   `json:"country_subdivision"`
 	PostCode           string   `json:"post_code"`
-	// The country name in English of the institution/branch as indicated in the ISO 3166 list
+	// CountryName - country name in English of the institution/branch as indicated in the ISO 3166 list
 	CountryName string `json:"country_name"`
-	// The ISO 3166-1 alpha-2 code of the country of the institution/branch
+	// CountryCode - ISO 3166-1 alpha-2 code of the country of the institution/branch
 	CountryCode string `json:"country_code"`
 }
 
-// ContactDetails - contact info
+// ContactDetails - contact of financial institution by BIC number
 type ContactDetails struct {
 	PhoneNumber  string `json:"phone_number"`
 	FaxNumber    string `json:"fax_number"`
@@ -51,7 +51,7 @@ type DetailsOfBic struct {
 // GetDetailsOfBic - implements https://developer.swift.com/reference#tag/bics specifications
 // bic - target bic
 // xApiKey - {{consumer-key}}
-func GetDetailsOfBic(bic string, ctx context.Context, xApiKey string, e env) (*DetailsOfBic, error) {
+func GetDetailsOfBic(ctx context.Context, bic string, xApiKey string, e env) (*DetailsOfBic, error) {
 	// create a new http-request instance
 	req, err := http.NewRequest(http.MethodGet, getBikDetailsUrl(e, bic), nil)
 	if err != nil {
@@ -79,7 +79,7 @@ func GetDetailsOfBic(bic string, ctx context.Context, xApiKey string, e env) (*D
 
 	// handle not 200 error codes
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
+		return nil, NewHttpError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
 
 	// parse response and return details

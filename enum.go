@@ -9,17 +9,20 @@ type env string
 type verificationContext string
 
 const (
-	// only available options by the time of
-	SandBoxEnv    = env("sandbox")
+	// SandBoxEnv - testing environment, but can be used in production for some services
+	// from docs:  ... KYC Registry API, Banking Analytics API, Banking Premium API and Compliance Analytics API, Sandbox CAN be used for UAT.
+	// https://developer.swift.com/support
+	SandBoxEnv = env("sandbox")
+	// ProductionEnv - production environment
 	ProductionEnv = env("production")
 
-	//'BENR' - Beneficiary registration. The beneficiary is being verified before being added to a
+	// VerCtxBENR - Beneficiary registration. The beneficiary is being verified before being added to a
 	//master data of beneficiary accounts with which the debtor has business relationships.
 	VerCtxBENR = verificationContext("BENR")
-	// 'PAYM' - The account verification is performed in the context of a Payment transaction,
+	// VerCtxPAYM - The account verification is performed in the context of a Payment transaction,
 	//before it is issued for execution.
 	VerCtxPAYM = verificationContext("PAYM")
-	// RFPP' - A request for payment transaction
+	// VerCtxRFPP - A request for payment transaction
 	//(the debtor account is being verified before the request is issued or the direct debit mandate is created)
 	VerCtxRFPP = verificationContext("RFPP")
 )

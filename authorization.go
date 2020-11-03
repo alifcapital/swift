@@ -53,26 +53,26 @@ type AuthenticationTokens struct {
 }
 
 // InvokeAuthTokens - fetches from SWIFT api new `AuthenticationTokens`
-func InvokeAuthTokens(creds *AppCredentials, ctx context.Context, e env) (*AuthenticationTokens, error) {
+func InvokeAuthTokens(ctx context.Context, creds *AppCredentials, e env) (*AuthenticationTokens, error) {
 	urlValues := url.Values{}
 	urlValues.Set("username", creds.UserName)
 	urlValues.Set("password", creds.Password)
 	urlValues.Set("grant_type", "password")
 
-	return invokeAccessToken(urlValues, creds, ctx, e)
+	return invokeAccessToken(ctx, creds, urlValues, e)
 }
 
 // RefreshAuthTokens - refreshes given `AuthenticationTokens`
-func RefreshAuthTokens(authTokens *AuthenticationTokens, creds *AppCredentials, ctx context.Context, e env) (*AuthenticationTokens, error) {
-	data := url.Values{}
-	data.Set("refresh_token", authTokens.RefreshToken)
-	data.Set("grant_type", "refresh_token")
+func RefreshAuthTokens(ctx context.Context, creds *AppCredentials, authTokens *AuthenticationTokens, e env) (*AuthenticationTokens, error) {
+	urlValues := url.Values{}
+	urlValues.Set("refresh_token", authTokens.RefreshToken)
+	urlValues.Set("grant_type", "refresh_token")
 
-	return invokeAccessToken(data, creds, ctx, e)
+	return invokeAccessToken(ctx, creds, urlValues, e)
 }
 
 // invokeAccessToken - sends requests to SWIFT api and creates new or refreshes existing token
-func invokeAccessToken(reqValues url.Values, creds *AppCredentials, ctx context.Context, e env) (*AuthenticationTokens, error) {
+func invokeAccessToken(ctx context.Context, creds *AppCredentials, reqValues url.Values, e env) (*AuthenticationTokens, error) {
 	req, err := http.NewRequest(http.MethodPost, getAccessTokenUrl(e), strings.NewReader(reqValues.Encode()))
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func invokeAccessToken(reqValues url.Values, creds *AppCredentials, ctx context.
 
 	// handle non 200 code
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
+		return nil, NewHttpError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
 
 	// parse response to appropriate struct
@@ -114,26 +114,26 @@ func invokeAccessToken(reqValues url.Values, creds *AppCredentials, ctx context.
 
 // RevokeAccessToken - removes/disposes authentication tokens
 // https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-func RevokeAccessToken(authToken *AuthenticationTokens, creds *AppCredentials, ctx context.Context, e env) error {
-	data := url.Values{}
-	data.Set("token", authToken.AccessToken)
-	data.Set("token_type_hint", "access_token")
+func RevokeAccessToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationTokens, e env) error {
+	urlValues := url.Values{}
+	urlValues.Set("token", authToken.AccessToken)
+	urlValues.Set("token_type_hint", "access_token")
 
-	return revokeToken(data, creds, ctx, e)
+	return revokeToken(ctx, creds, urlValues, e)
 }
 
 // RevokeRefreshToken - removes/disposes authentication tokens
 // https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-func RevokeRefreshToken(authToken *AuthenticationTokens, creds *AppCredentials, ctx context.Context, e env) error {
-	data := url.Values{}
-	data.Set("token", authToken.RefreshToken)
-	data.Set("token_type_hint", "refresh_token")
+func RevokeRefreshToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationTokens, e env) error {
+	urlValues := url.Values{}
+	urlValues.Set("token", authToken.RefreshToken)
+	urlValues.Set("token_type_hint", "refresh_token")
 
-	return revokeToken(data, creds, ctx, e)
+	return revokeToken(ctx, creds, urlValues, e)
 }
 
 // revokeToken - actual implementation of revoking access tokens
-func revokeToken(data url.Values, creds *AppCredentials, ctx context.Context, e env) error {
+func revokeToken(ctx context.Context, creds *AppCredentials, data url.Values, e env) error {
 	// create request with form values url encoded
 	req, err := http.NewRequest(http.MethodPost, getRevokeTokenUrl(e), strings.NewReader(data.Encode()))
 	if err != nil {
@@ -163,7 +163,7 @@ func revokeToken(data url.Values, creds *AppCredentials, ctx context.Context, e 
 			return err
 		}
 
-		return NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
+		return NewHttpError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
 	return nil
 }

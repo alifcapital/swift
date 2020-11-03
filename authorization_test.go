@@ -42,7 +42,6 @@ func newTestsConfig() *testsConfig {
 	return &tc
 }
 
-
 // validateAccessTokenFields - check lifetimes and type of token
 func validateAccessTokenFields(t *testing.T, token *AuthenticationTokens) {
 	expectedTokenTime := fmt.Sprintf("%d", (60*30)-1) // 30 min
@@ -67,7 +66,7 @@ func TestInvokeAuthTokens(t *testing.T) {
 	e := SandBoxEnv
 
 	// sends request to SWIFT api, returns new access token instance
-	authToken, err := InvokeAuthTokens(creds, ctx, e)
+	authToken, err := InvokeAuthTokens(ctx, creds, e)
 	assert.Nil(t, err)
 
 	// assert expectations
@@ -75,7 +74,7 @@ func TestInvokeAuthTokens(t *testing.T) {
 
 	// after performing tests, it would be a good idea to `remove` token
 	// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-	err = RevokeAccessToken(authToken, creds, ctx, e)
+	err = RevokeAccessToken(ctx, creds, authToken, e)
 	assert.Nil(t, err)
 }
 
@@ -89,11 +88,11 @@ func TestRefreshAuthTokens(t *testing.T) {
 	e := SandBoxEnv
 
 	// sends request to SWIFT api, returns new access token instance
-	authTokens, err := InvokeAuthTokens(creds, ctx, e)
+	authTokens, err := InvokeAuthTokens(ctx, creds, e)
 	assert.Nil(t, err)
 
 	// try to refresh authTokens
-	refreshedToken, err := RefreshAuthTokens(authTokens, creds, ctx, e)
+	refreshedToken, err := RefreshAuthTokens(ctx, creds, authTokens, e)
 	assert.Nil(t, err)
 
 	// assert expectations
@@ -101,11 +100,11 @@ func TestRefreshAuthTokens(t *testing.T) {
 
 	// after validating fields clean-up token
 	// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-	err = RevokeRefreshToken(refreshedToken, creds, ctx, e)
+	err = RevokeRefreshToken(ctx, creds, refreshedToken, e)
 	assert.Nil(t, err)
 
 	// NOTE: original access token is not valid after refreshing it
 	// and server error will be returned
-	 err = RevokeAccessToken(authTokens, creds, ctx, e)
-	 assert.Error(t, err)
+	err = RevokeAccessToken(ctx, creds, authTokens, e)
+	assert.Error(t, err)
 }

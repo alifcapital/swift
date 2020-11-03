@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const CRLF = "\r\n"
+const crlf = "\r\n"
 
 // VerificationRequestSchema - this data send to endpoint to get information about SWIFT account
 // not all fields required, same fields that not going to be used at all not implemented to save some time
@@ -377,21 +377,21 @@ func makeLauSignature(
 	var sb strings.Builder
 	sb.WriteString("LAUApplicationID:")
 	sb.WriteString(lauAppId)
-	sb.WriteString(CRLF)
+	sb.WriteString(crlf)
 	sb.WriteString("LAUCallTime:")
 	sb.WriteString(lauCallTime)
-	sb.WriteString(CRLF)
+	sb.WriteString(crlf)
 	sb.WriteString("LAURequestNonce:")
 	sb.WriteString(lauReqNonce)
-	sb.WriteString(CRLF)
+	sb.WriteString(crlf)
 	sb.WriteString("LAUSigned:")
 	sb.WriteString(lauSigned)
-	sb.WriteString(CRLF)
+	sb.WriteString(crlf)
 	sb.WriteString("LAUVersion:")
 	sb.WriteString(lauVersion)
-	sb.WriteString(CRLF)
+	sb.WriteString(crlf)
 	sb.WriteString(verificationUrl)
-	sb.WriteString(CRLF)
+	sb.WriteString(crlf)
 
 	// ... from request-body
 	sb.Write(reqSchemaJson)
@@ -451,7 +451,7 @@ func PerformPreValidationCheck(
 
 	// check for status-code being 200
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewSWIFTError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
+		return nil, NewHttpError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
 	}
 
 	// parse response to appropriate structure
