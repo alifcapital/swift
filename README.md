@@ -1,7 +1,7 @@
 ## SWIFT SDK in GO
 This package is written to cover low level stuff for integration with [SWIFT Payments](https://swift.com).
-All code is written according to specification from [Developers API](https://developer.swift.com/api), 
-checkout the link to discover more. For the moment package implements following:
+All code is written according to specification from [Developers API](https://developer.swift.com/api),
+checkout the link to discover more. [References](https://developer.swift.com/reference) for the moment package implements: 
 - [x] [Authentication](https://developer.swift.com/oauth-reference#section/Authentication)
 - [x] [Pre-Validation](https://developer.swift.com/api/prevalidation/overview)
 - [ ] [SWIFTRef](https://developer.swift.com/api/swiftref/overview)
@@ -10,9 +10,6 @@ checkout the link to discover more. For the moment package implements following:
 ```bash
 go get github.com/alifcapital/swift
 ```
-
-## DOCS
-Official Swift Developer Portal https://developer.swift.com/reference. See tests and implementation specifics to discover more.
 
 ## TESTS
 ```bash

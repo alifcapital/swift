@@ -10,7 +10,6 @@ import (
 )
 
 // AppCredentials - credentials to make OAuth2 request
-// https://developer.swift.com/oauth-reference#section/Authentication/clientAuth
 type AppCredentials struct {
 	BasicAuthUser string
 	BasicAuthPass string
@@ -19,7 +18,6 @@ type AppCredentials struct {
 }
 
 // NewAppCredentials - factory function
-// `variables` in Postman collection
 //
 // baUser - {{consumer_key}}
 // baPass - {{consumer_secret}}
@@ -53,6 +51,7 @@ type AuthenticationTokens struct {
 }
 
 // InvokeAuthTokens - fetches from SWIFT api new `AuthenticationTokens`
+// https://developer.swift.com/oauth-reference#section/Authentication/clientAuth
 func InvokeAuthTokens(ctx context.Context, creds *AppCredentials, e env) (*AuthenticationTokens, error) {
 	urlValues := url.Values{}
 	urlValues.Set("username", creds.UserName)
@@ -72,8 +71,8 @@ func RefreshAuthTokens(ctx context.Context, creds *AppCredentials, authTokens *A
 }
 
 // invokeAccessToken - sends requests to SWIFT api and creates new or refreshes existing token
-func invokeAccessToken(ctx context.Context, creds *AppCredentials, reqValues url.Values, e env) (*AuthenticationTokens, error) {
-	req, err := http.NewRequest(http.MethodPost, getAccessTokenUrl(e), strings.NewReader(reqValues.Encode()))
+func invokeAccessToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) (*AuthenticationTokens, error) {
+	req, err := http.NewRequest(http.MethodPost, getAccessTokenUrl(e), strings.NewReader(urlValues.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -133,9 +132,9 @@ func RevokeRefreshToken(ctx context.Context, creds *AppCredentials, authToken *A
 }
 
 // revokeToken - actual implementation of revoking access tokens
-func revokeToken(ctx context.Context, creds *AppCredentials, data url.Values, e env) error {
+func revokeToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) error {
 	// create request with form values url encoded
-	req, err := http.NewRequest(http.MethodPost, getRevokeTokenUrl(e), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, getRevokeTokenUrl(e), strings.NewReader(urlValues.Encode()))
 	if err != nil {
 		return err
 	}
