@@ -7,12 +7,26 @@ import (
 	"testing"
 )
 
-func TestGetDetailsOfBic_WithoutCredentials(t *testing.T) {
+var (
+	realBic  = "BUKBGB22XXX"
+	realIBAN = "GB33BUKB20201555555555"
+)
+
+func TestGetDetailsOfBic(t *testing.T) {
 	conf := newTestsConfig()
 	ctx := context.Background()
 
 	// send request
-	details, err := GetDetailsOfBic(ctx, conf.RealBic, "no-key", SandBoxEnv)
+	details, err := GetDetailsOfBic(ctx, realBic, conf.XApiKey, SandBoxEnv)
+	assert.Nil(t, err)
+	assert.NotNil(t, details)
+}
+
+func TestGetDetailsOfBic_WithoutCredentials(t *testing.T) {
+	ctx := context.Background()
+
+	// send request
+	details, err := GetDetailsOfBic(ctx, realBic, "no-key", SandBoxEnv)
 	assert.Error(t, err)
 	assert.Nil(t, details)
 
@@ -20,17 +34,34 @@ func TestGetDetailsOfBic_WithoutCredentials(t *testing.T) {
 	case *HttpError:
 		assert.Equal(t, http.StatusUnauthorized, v.Code)
 	default:
-		// exactly `HttpError` expected
+		// `HttpError` expected
 		assert.True(t, false)
 	}
 }
 
-func TestGetDetailsOfBic(t *testing.T) {
+func TestCheckValidityOfIBAN(t *testing.T) {
 	conf := newTestsConfig()
 	ctx := context.Background()
 
-	// send request
-	details, err := GetDetailsOfBic(ctx, conf.RealBic, conf.XApiKey, SandBoxEnv)
+	respSchema, err := CheckValidityOfIBAN(ctx, realIBAN, conf.AppApiKey, SandBoxEnv)
 	assert.Nil(t, err)
-	assert.NotNil(t, details)
+	assert.True(t, respSchema.Valid())
+}
+
+func TestGetDetailsForIBAN(t *testing.T) {
+	conf := newTestsConfig()
+	ctx := context.Background()
+
+	components, err := GetDetailsForIBAN(ctx, realIBAN, conf.AppApiKey, SandBoxEnv)
+	assert.Nil(t, err)
+	assert.Equal(t, realIBAN, components.IBAN)
+}
+
+func TestGetBicByIBAN(t *testing.T) {
+	conf := newTestsConfig()
+	ctx := context.Background()
+
+	gotBic, err := GetBicByIBAN(ctx, realIBAN, conf.AppApiKey, SandBoxEnv)
+	assert.Nil(t, err)
+	assert.Equal(t, realBic, gotBic)
 }

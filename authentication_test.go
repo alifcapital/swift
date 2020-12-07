@@ -24,7 +24,6 @@ type testsConfig struct {
 	AppApiKey     string `json:"app_api_key"`
 	Xbic          string `json:"xbic"`
 	XApiKey       string `json:"x_api_key"`
-	RealBic       string `json:"real_bic"`
 }
 
 // newTestsConfig - read file and make tests configs
@@ -43,7 +42,7 @@ func newTestsConfig() *testsConfig {
 }
 
 // validateAccessTokenFields - check lifetimes and type of token
-func validateAccessTokenFields(t *testing.T, token *AuthenticationTokens) {
+func validateAccessTokenFields(t *testing.T, token *AuthenticationToken) {
 	expectedTokenTime := fmt.Sprintf("%d", (60*30)-1) // 30 min
 	assert.Equal(t, token.ExpiresIn, expectedTokenTime)
 

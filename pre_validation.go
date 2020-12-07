@@ -294,7 +294,7 @@ func NewVerificationRequest(
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, getVerificationUrl(e), &b)
+	req, err := http.NewRequest(http.MethodPost, verificationUrl(e), &b)
 	if err != nil {
 		return nil, err
 	}

@@ -32,16 +32,16 @@ func NewAppCredentials(baUser, baPass, userName, password string) *AppCredential
 	}
 }
 
-// AuthenticationTokens - returned after successful authentication
+// AuthenticationToken - returned after successful authentication
 // `AccessToken` used in http Authorization headers
 // `ExpiresIn` by default is 1800-1 seconds (30min)
-// `RefreshToken` used for requiring new AuthenticationTokens and is alive for 86400-1 seconds (1 day)
-// `TokenType` is a part of Authorization header: ex. req.Header.Set("Authorization", "Bearer "+t.AuthenticationTokens
+// `RefreshToken` used for requiring new AuthenticationToken and is alive for 86400-1 seconds (1 day)
+// `TokenType` is a part of Authorization header: ex. req.Header.Set("Authorization", "Bearer "+t.AuthenticationToken
 //
 // It is strongly recommended that your application dispose tokens that are no longer needed.
 // SWIFT will invalidate the tokens from further use if you do.
 // Once invalidated, they can no longer be used to access SWIFT APIs.
-type AuthenticationTokens struct {
+type AuthenticationToken struct {
 	AccessToken           string `json:"access_token"`
 	ExpiresIn             string `json:"expires_in"`
 	RefreshToken          string `json:"refresh_token"`
@@ -50,9 +50,9 @@ type AuthenticationTokens struct {
 	IdmService            string `json:"idm_service"`
 }
 
-// InvokeAuthTokens - fetches from SWIFT api new `AuthenticationTokens`
+// InvokeAuthTokens - fetches from SWIFT api new `AuthenticationToken`
 // https://developer.swift.com/oauth-reference#section/Authentication/clientAuth
-func InvokeAuthTokens(ctx context.Context, creds *AppCredentials, e env) (*AuthenticationTokens, error) {
+func InvokeAuthTokens(ctx context.Context, creds *AppCredentials, e env) (*AuthenticationToken, error) {
 	urlValues := url.Values{}
 	urlValues.Set("username", creds.UserName)
 	urlValues.Set("password", creds.Password)
@@ -61,18 +61,18 @@ func InvokeAuthTokens(ctx context.Context, creds *AppCredentials, e env) (*Authe
 	return invokeAccessToken(ctx, creds, urlValues, e)
 }
 
-// RefreshAuthTokens - refreshes given `AuthenticationTokens`
-func RefreshAuthTokens(ctx context.Context, creds *AppCredentials, authTokens *AuthenticationTokens, e env) (*AuthenticationTokens, error) {
+// RefreshAuthTokens - refreshes given `AuthenticationToken`
+func RefreshAuthTokens(ctx context.Context, creds *AppCredentials, authToken *AuthenticationToken, e env) (*AuthenticationToken, error) {
 	urlValues := url.Values{}
-	urlValues.Set("refresh_token", authTokens.RefreshToken)
+	urlValues.Set("refresh_token", authToken.RefreshToken)
 	urlValues.Set("grant_type", "refresh_token")
 
 	return invokeAccessToken(ctx, creds, urlValues, e)
 }
 
 // invokeAccessToken - sends requests to SWIFT api and creates new or refreshes existing token
-func invokeAccessToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) (*AuthenticationTokens, error) {
-	req, err := http.NewRequest(http.MethodPost, getAccessTokenUrl(e), strings.NewReader(urlValues.Encode()))
+func invokeAccessToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) (*AuthenticationToken, error) {
+	req, err := http.NewRequest(http.MethodPost, accessTokenUrl(e), strings.NewReader(urlValues.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func invokeAccessToken(ctx context.Context, creds *AppCredentials, urlValues url
 	}
 
 	// parse response to appropriate struct
-	token := AuthenticationTokens{}
+	token := AuthenticationToken{}
 	if err := json.Unmarshal(b.Bytes(), &token); err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func invokeAccessToken(ctx context.Context, creds *AppCredentials, urlValues url
 
 // RevokeAccessToken - removes/disposes authentication tokens
 // https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-func RevokeAccessToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationTokens, e env) error {
+func RevokeAccessToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationToken, e env) error {
 	urlValues := url.Values{}
 	urlValues.Set("token", authToken.AccessToken)
 	urlValues.Set("token_type_hint", "access_token")
@@ -123,7 +123,7 @@ func RevokeAccessToken(ctx context.Context, creds *AppCredentials, authToken *Au
 
 // RevokeRefreshToken - removes/disposes authentication tokens
 // https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-func RevokeRefreshToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationTokens, e env) error {
+func RevokeRefreshToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationToken, e env) error {
 	urlValues := url.Values{}
 	urlValues.Set("token", authToken.RefreshToken)
 	urlValues.Set("token_type_hint", "refresh_token")
@@ -134,7 +134,7 @@ func RevokeRefreshToken(ctx context.Context, creds *AppCredentials, authToken *A
 // revokeToken - actual implementation of revoking access tokens
 func revokeToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) error {
 	// create request with form values url encoded
-	req, err := http.NewRequest(http.MethodPost, getRevokeTokenUrl(e), strings.NewReader(urlValues.Encode()))
+	req, err := http.NewRequest(http.MethodPost, revokeTokenUrl(e), strings.NewReader(urlValues.Encode()))
 	if err != nil {
 		return err
 	}
