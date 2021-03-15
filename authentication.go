@@ -4,35 +4,23 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 )
 
-// AppCredentials - credentials to make OAuth2 request
+// AppCredentials is a credentials to make OAuth2 request
 type AppCredentials struct {
-	BasicAuthUser string
-	BasicAuthPass string
-	UserName      string
-	Password      string
+	BasicAuthUser string // consumer_key
+	BasicAuthPass string // consumer_secret
+	Username      string // license_id
+	Password      string // license_key
 }
 
-// NewAppCredentials - factory function
-//
-// baUser - {{consumer_key}}
-// baPass - {{consumer_secret}}
-// userName - {{license_id}}
-// password - {{license_key}}
-func NewAppCredentials(baUser, baPass, userName, password string) *AppCredentials {
-	return &AppCredentials{
-		BasicAuthUser: baUser,
-		BasicAuthPass: baPass,
-		UserName:      userName,
-		Password:      password,
-	}
-}
-
-// AuthenticationToken - returned after successful authentication
+// AuthenticationToken returned after successful authentication
 // `AccessToken` used in http Authorization headers
 // `ExpiresIn` by default is 1800-1 seconds (30min)
 // `RefreshToken` used for requiring new AuthenticationToken and is alive for 86400-1 seconds (1 day)
@@ -47,122 +35,119 @@ type AuthenticationToken struct {
 	RefreshToken          string `json:"refresh_token"`
 	RefreshTokenExpiresIn string `json:"refresh_token_expires_in"`
 	TokenType             string `json:"token_type"`
-	IdmService            string `json:"idm_service"`
 }
 
-// InvokeAuthTokens - fetches from SWIFT api new `AuthenticationToken`
+// GetAuthToken fetches from SWIFT api new `AuthenticationToken`.
 // https://developer.swift.com/oauth-reference#section/Authentication/clientAuth
-func InvokeAuthTokens(ctx context.Context, creds *AppCredentials, e env) (*AuthenticationToken, error) {
-	urlValues := url.Values{}
-	urlValues.Set("username", creds.UserName)
-	urlValues.Set("password", creds.Password)
+//
+// CAUTION: getting new access token invalidates previous one, so DO NOT use it
+// when you are using API methods for SWIFT-API. Getting new access tokens by need is
+// managed automatically by API.
+func (api *API) GetAuthToken(ctx context.Context) (*AuthenticationToken, error) {
+	urlValues := make(url.Values)
+	urlValues.Set("username", api.credentials.Username)
+	urlValues.Set("password", api.credentials.Password)
 	urlValues.Set("grant_type", "password")
-
-	return invokeAccessToken(ctx, creds, urlValues, e)
+	return api.invokeToken(ctx, "/oauth2/v1/token", urlValues)
 }
 
-// RefreshAuthTokens - refreshes given `AuthenticationToken`
-func RefreshAuthTokens(ctx context.Context, creds *AppCredentials, authToken *AuthenticationToken, e env) (*AuthenticationToken, error) {
-	urlValues := url.Values{}
-	urlValues.Set("refresh_token", authToken.RefreshToken)
+// RefreshAuthToken fetches from SWIFT api new `AuthenticationToken`.
+// https://developer.swift.com/oauth-reference#section/Authentication/clientAuth
+func (api *API) RefreshAuthToken(ctx context.Context) (*AuthenticationToken, error) {
+	token, err := api.reuseTokenSource.Token()
+	if err != nil {
+		return nil, err
+	}
+	urlValues := make(url.Values)
+	urlValues.Set("refresh_token", token.RefreshToken)
 	urlValues.Set("grant_type", "refresh_token")
-
-	return invokeAccessToken(ctx, creds, urlValues, e)
+	return api.invokeToken(ctx, "/oauth2/v1/token", urlValues)
 }
 
-// invokeAccessToken - sends requests to SWIFT api and creates new or refreshes existing token
-func invokeAccessToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) (*AuthenticationToken, error) {
-	req, err := http.NewRequest(http.MethodPost, accessTokenUrl(e), strings.NewReader(urlValues.Encode()))
+// RevokeAuthToken removes/disposes authentication tokens.
+// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
+func (api *API) RevokeAuthToken(ctx context.Context) error {
+	token, err := api.reuseTokenSource.Token()
+	if err != nil {
+		return err
+	}
+	urlValues := make(url.Values)
+	urlValues.Set("token", token.AccessToken)
+	return api.revokeToken(ctx, "/oauth2/v1/revoke", urlValues)
+}
+
+func (api *API) invokeToken(ctx context.Context, path string, urlValues url.Values) (*AuthenticationToken, error) {
+	response, err := api.sendRequest(ctx, path, urlValues)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	defer response.Body.Close()
 
-	// set any context given to request
-	req = req.WithContext(ctx)
-
-	// set basic auth
-	req.SetBasicAuth(creds.BasicAuthUser, creds.BasicAuthPass)
-
-	// send request
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// load response body
 	var b bytes.Buffer
-	_, err = b.ReadFrom(resp.Body)
+	_, err = b.ReadFrom(response.Body)
 	if err != nil {
 		return nil, err
 	}
-
-	// handle non 200 code
-	if resp.StatusCode != http.StatusOK {
-		return nil, NewHttpError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
+	if response.StatusCode != http.StatusOK {
+		return nil, NewErrWithHTTPResponse(response, err)
 	}
-
-	// parse response to appropriate struct
-	token := AuthenticationToken{}
+	var token AuthenticationToken
 	if err := json.Unmarshal(b.Bytes(), &token); err != nil {
 		return nil, err
 	}
 	return &token, nil
 }
 
-// RevokeAccessToken - removes/disposes authentication tokens
-// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-func RevokeAccessToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationToken, e env) error {
-	urlValues := url.Values{}
-	urlValues.Set("token", authToken.AccessToken)
-	urlValues.Set("token_type_hint", "access_token")
-
-	return revokeToken(ctx, creds, urlValues, e)
-}
-
-// RevokeRefreshToken - removes/disposes authentication tokens
-// https://developer.swift.com/oauth-reference#operation/revokeAccessToken
-func RevokeRefreshToken(ctx context.Context, creds *AppCredentials, authToken *AuthenticationToken, e env) error {
-	urlValues := url.Values{}
-	urlValues.Set("token", authToken.RefreshToken)
-	urlValues.Set("token_type_hint", "refresh_token")
-
-	return revokeToken(ctx, creds, urlValues, e)
-}
-
-// revokeToken - actual implementation of revoking access tokens
-func revokeToken(ctx context.Context, creds *AppCredentials, urlValues url.Values, e env) error {
-	// create request with form values url encoded
-	req, err := http.NewRequest(http.MethodPost, revokeTokenUrl(e), strings.NewReader(urlValues.Encode()))
+func (api *API) revokeToken(ctx context.Context, path string, urlValues url.Values) error {
+	response, err := api.sendRequest(ctx, path, urlValues)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// set any context given to request
-	req = req.WithContext(ctx)
-
-	// set basic auth
-	req.SetBasicAuth(creds.BasicAuthUser, creds.BasicAuthPass)
-
-	// send request
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// handle non 200 code
-	if resp.StatusCode != http.StatusOK {
-		// load response body
-		var b bytes.Buffer
-		_, err = b.ReadFrom(resp.Body)
-		if err != nil {
-			return err
-		}
-
-		return NewHttpError(resp.StatusCode, b.String(), resp.Header.Get("Content-Type"))
+	if response.StatusCode != http.StatusOK {
+		return NewErrWithHTTPResponse(response, err)
 	}
 	return nil
+}
+
+func (api *API) sendRequest(ctx context.Context, path string, urlValues url.Values) (*http.Response, error) {
+	request, err := http.NewRequest(http.MethodPost, api.url(path), strings.NewReader(urlValues.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	request = request.WithContext(ctx)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth(api.credentials.BasicAuthUser, api.credentials.BasicAuthPass)
+	return api.httpClient.Do(request)
+}
+
+// Token gets new access token. You SHOULD NOT call it.
+func (api *API) Token() (*oauth2.Token, error) {
+	token, err := api.GetAuthToken(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	oauth2Token, err := token.toOAUTH2Token()
+	if err != nil {
+		return nil, err
+	}
+	return oauth2Token, nil
+}
+
+func (token *AuthenticationToken) toOAUTH2Token() (*oauth2.Token, error) {
+	expiresIn, err := strconv.Atoi(token.ExpiresIn)
+	if err != nil {
+		return nil, err
+	}
+	expiresInDate := time.Now().Add(time.Duration(expiresIn) * time.Second)
+	oauth2Token := oauth2.Token{
+		AccessToken:  token.AccessToken,
+		TokenType:    token.TokenType,
+		RefreshToken: token.RefreshToken,
+		Expiry:       expiresInDate,
+	}
+	return &oauth2Token, nil
+}
+
+func (api *API) url(path string) string {
+	return api.basePath + path
 }

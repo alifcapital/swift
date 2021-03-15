@@ -1,0 +1,3742 @@
+openapi: 3.0.0
+info:
+  title: SWIFTRef API
+  description: SWIFTRef API
+  termsOfService: https://www.swift.com/file/8611/download?token=71xFjDkK
+  contact:
+    name: Standards & Developer Hub
+    url: https://developer.swift.com
+    email: developer-support@swift.com
+  license:
+    name: API Restricted License
+    url: https://www.swift.com/file/56776/download?token=8w8DC4eF
+  version: 1.6.0
+servers:
+- url: https://api.swift.com/swiftrefdata
+  description: Live environment
+- url: https://sandbox.swift.com/swiftrefdata
+  description: Sandbox environment
+security:
+- oAuth2Password:
+  - urn:swiftref:external
+paths:
+  /v2/ibans/{iban}/validity:
+    get:
+      tags:
+      - ibans
+      summary: Check validity of an IBAN.
+      description: "You can check whether an IBAN is valid, that is its country code,\
+        \ structure, length, and checksum are valid. It also checks that the bank\
+        \ ID exists and that it is allowed for use in the IBANs. If the bank ID is\
+        \ not allowed, then it is listed in the Exclusion List. This list contains\
+        \ bank IDs that must not be used in IBANs. This validity call allows for very\
+        \ fast, low overhead checking of the validity of an IBAN."
+      operationId: getIbanValidity_v2
+      parameters:
+      - name: iban
+        in: path
+        description: IBAN to validate
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DE04500700100532013000
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: The IBAN is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.IVAL
+                  user_message: The IBAN is valid
+                  more_info: ISO 13616
+                iban: DE04500700100532013000
+                validity: IVAL
+        "400":
+          description: Wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MIRI
+                  user_message: Wrong URL format
+                  developer_message: "Invalid IBAN resource identifier (not matching\
+                    \ expression [a-zA-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,30}) or missing\
+                    \ IBAN resource identifier"
+                  more_info: ISO 13616
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: ISO IBAN country code prefix is not valid or IBAN length is
+            invalid or IBAN checksum is invalid or Bank ID is not known to SWIFT or
+            The bank ID is invalid according to the EXCLUSION LIST or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.IICC
+                  user_message: ISO IBAN country code prefix is not valid
+                  developer_message: The country code prefix is not listed in the
+                    IBANSTRUCTURE file and the ISO IBAN Registry
+                  more_info: ISO 3166
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/ibans/{iban}/bic:
+    get:
+      tags:
+      - ibans
+      summary: Get the BIC for an IBAN.
+      description: "For a given IBAN, you can retrieve the BIC of the institution\
+        \ that services the IBAN. This API is compliant with the requirement for BIC\
+        \ from IBAN derivation defined in the Regulation (EU) No 260/2012."
+      operationId: getBicFromIban_v2
+      parameters:
+      - name: iban
+        in: path
+        description: IBAN for which the corresponding BIC is requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DE04500700100532013000
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding BIC found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.BIWF
+                  user_message: Corresponding BIC found
+                  developer_message: "The IBAN is valid, exists and has one BIC associated"
+                  more_info: ISO 13616
+                bic: DEUTDEFFXXX
+        "400":
+          description: Wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MIRI
+                  user_message: Wrong URL format
+                  developer_message: "Invalid IBAN resource identifier (not matching\
+                    \ expression [a-zA-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,30}) or missing\
+                    \ IBAN resource identifier"
+                  more_info: ISO 13616
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding BIC found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.BINF
+                  user_message: No corresponding BIC found
+                  developer_message: The supplied IBAN does not exist or has no BIC
+                    associated
+                  more_info: ISO 13616
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/ibans/{iban}:
+    get:
+      tags:
+      - ibans
+      summary: Get details for an IBAN.
+      description: "For a given IBAN, you can obtain the components of the IBAN."
+      operationId: getIbanDetails_v2
+      parameters:
+      - name: iban
+        in: path
+        description: IBAN for which details are requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DE04500700100532013000
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding IBAN found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_2'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.IBWF
+                  user_message: Corresponding IBAN found
+                  more_info: ISO 13616
+                iban: DE04500700100532013000
+                country_code: DE
+                checksum: 4
+                bank_id: 50070010
+                account_number: 532013000
+                length: 22
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding IBAN found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.IBNF
+                  user_message: No corresponding IBAN found
+                  developer_message: The supplied IBAN does not exist
+                  more_info: ISO 3166
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/iban_national_ids/{iban_national_id}/bic:
+    get:
+      tags:
+      - iban_national_ids
+      summary: Get the BIC for an IBAN national ID.
+      description: "For a given IBAN national ID, you can retrieve the BIC of the\
+        \ institution that services the IBAN."
+      operationId: getBicFromIbanNationalId_v2
+      parameters:
+      - name: iban_national_id
+        in: path
+        description: IBAN national ID for which the corresponding BIC is requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: 5007001
+      - name: country_code
+        in: query
+        description: The 2-character ISO 3166-1 country code of the country that issued
+          the IBAN National ID
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: DE
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding BIC found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.BICF
+                  user_message: BIC found
+                bic: DEUTDEFFXXX
+        "400":
+          description: "Invalid parameters, missing required parameters or wrong URL\
+            \ format"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithShortStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.ICCF
+                  developer_message: Invalid country code format
+                  more_info: ISO 13616
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding BIC found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithShortStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.IINI
+                  user_message: No corresponding BIC found
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bbans/{bban}/iban:
+    get:
+      tags:
+      - bbans
+      summary: Get the IBAN from a BBAN.
+      description: "For a given Basic Bank Account Number (BBAN), you can retrieve\
+        \ the corresponding IBAN; you must also provide a country code"
+      operationId: getIbanFromBban_v2
+      parameters:
+      - name: bban
+        in: path
+        description: BBAN for which the corresponding IBAN is requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: 500700100532013000
+      - name: country_code
+        in: query
+        description: The 2-character ISO 3166-1 country code of the country that issued
+          the National ID
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: DE
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding IBAN found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_4'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.IBWF
+                  user_message: Corresponding IBAN found
+                  more_info: ISO 13616
+                iban: DE04500700100532013000
+        "400":
+          description: Invalid country code parameter or invalid parameters or wrong
+            URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MIRI
+                  user_message: Invalid country code parameter
+                  developer_message: Supplied country code parameter does not exist
+                  more_info: ISO 3166
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding IBAN found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.IBNF
+                  user_message: No corresponding IBAN found
+                  more_info: ISO 13616
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bics/{bic}:
+    get:
+      tags:
+      - bics
+      summary: Get details of a BIC.
+      description: "For a given BIC, you can retrieve the details of that BIC, that\
+        \ is the bank name or business name, and the address."
+      operationId: getBicDetails_v2
+      parameters:
+      - name: bic
+        in: path
+        description: BIC (8-characters or 11-characters) for which details are requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DEUTDEFFXXX
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding BIC found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_5'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.BIWF
+                  user_message: Corresponding BIC found
+                  developer_message: BIC is valid and it exists within the BIC Directory
+                  more_info: ISO 9362:2009
+                bic: DEUTDEFFXXX
+                institution_name: DEUTSCHE BANK AG
+                branch_information: Deutsche Bank Frankfurt F
+                address:
+                  address_lines:
+                  - TAUNUSANLAGE 12
+                  town_name: FRANKFURT AM MAIN
+                  country_subdivision: HESSE
+                  post_code: 60262
+                  country_name: GERMANY
+                  country_code: DE
+                office_type: HO
+                swift_services:
+                - code: TGT
+                  name: TARGET2 DIRECT PARTICIPANTS
+                - code: EBA
+                  name: EBA CLEARING - EURO1
+                - code: ERP
+                  name: EBA CLEARING - STEP1
+                - code: PCH
+                  name: SWISS INTERBANK CLEARING (SIC)
+                - code: SCO
+                  name: SCORE FIN
+                - code: FIN
+                  name: Many-to-many FIN payment service
+                swift_connectivity:
+                  fin: true
+                  interact: true
+                  fileact: true
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding BIC found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.BINF
+                  user_message: No corresponding BIC found
+                  developer_message: The supplied BIC does not exist within the BIC
+                    Directory
+                  more_info: ISO 9362:2009
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bics/{bic}/validity:
+    get:
+      tags:
+      - bics
+      summary: Check validity of a BIC.
+      description: "You can check whether a BIC is correct and valid, that is whether\
+        \ it is published in the BIC Directory; optionally, you can check whether\
+        \ a BIC was valid at a particular date in the past"
+      operationId: getBicValidity_v2
+      parameters:
+      - name: bic
+        in: path
+        description: BIC (8-characters or 11-characters) to validate
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DEUTDEFFXXX
+      - name: effective_date
+        in: query
+        description: A date in YYYY-MM-DD format
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: 2019-01-01
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Valid BIC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_6'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.VBIC
+                  user_message: Valid BIC
+                  developer_message: "BIC resource identifier matches expression [A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}\
+                    \ and it exists within the BIC Directory (and is valid on the\
+                    \ supplied date, if date supplied with the correct parameter name)"
+                  more_info: ISO 9362
+                bic: DEUTDEFFXXX
+                validity: VBIC
+                effective_date: 2019-01-01Z
+        "400":
+          description: Invalid BIC format or BIC not supplied or invalid date parameter
+            or wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MBRI
+                  user_message: Invalid BIC format or BIC not supplied
+                  developer_message: "Invalid BIC resource identifier (not matching\
+                    \ expression [A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1})\
+                    \ or missing BIC resource identifier"
+                  more_info: ISO 9362
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: Invalid BIC or BIC not found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.IBIC
+                  user_message: Invalid BIC
+                  developer_message: "BIC resource identifier matches expression [A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1},\
+                    \ but it does not exist within the BIC Directory (or is invalid\
+                    \ on the supplied date, if supplied)"
+                  more_info: ISO 9362
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bics/{bic}/lei:
+    get:
+      tags:
+      - bics
+      summary: Get the LEI for a BIC.
+      description: "For a given BIC, you can retrieve the LEI of that BIC."
+      operationId: getLeiFromBic_v2
+      parameters:
+      - name: bic
+        in: path
+        description: BIC (8-characters or 11-characters) for which the corresponding
+          LEI is requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DEUTDEFFXXX
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding LEI found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_7'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.LEIF
+                  user_message: Corresponding LEI found
+                  developer_message: The BIC exists and has one LEI associated
+                lei: 7LTWFZYICNSX8D621K86
+        "400":
+          description: Wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MBRI
+                  user_message: Wrong URL format
+                  developer_message: Missing BIC resource identifier
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding LEI found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.LEIN
+                  user_message: No corresponding LEI found
+                  developer_message: The BIC does not exist or has no LEI associated
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/leis/{lei}/bic:
+    get:
+      tags:
+      - leis
+      summary: Get the BIC for an LEI.
+      description: "For a given LEI, you can retrieve the BIC of that LEI."
+      operationId: getBicFromLei_v2
+      parameters:
+      - name: lei
+        in: path
+        description: LEI (20-characters) for which the corresponding BIC is requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: 7LTWFZYICNSX8D621K86
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding BIC found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_8'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.BIWF
+                  user_message: Corresponding BIC found
+                  developer_message: "The LEI is valid, exists and has one BIC associated"
+                  more_info: ISO 17442
+                bic: DEUTDEFFXXX
+        "400":
+          description: Wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MLRI
+                  user_message: Wrong URL format
+                  developer_message: Missing LEI resource identifier
+                  more_info: ISO 17442
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding BIC found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.BINF
+                  user_message: No corresponding BIC found
+                  developer_message: The LEI does not exist or has no BIC associated
+                  more_info: ISO 17442
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bics/{bic}/national_ids:
+    get:
+      tags:
+      - bics
+      summary: Get National IDs for a BIC.
+      description: "For a given BIC, you can retrieve the National IDs of that BIC."
+      operationId: getNationalIdsFromBic_v2
+      parameters:
+      - name: bic
+        in: path
+        description: BIC (8-characters or 11-characters) for which the corresponding
+          National IDs are requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DEUTDEFFXXX
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding National ID(s) found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_9'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.NIDF
+                  user_message: Corresponding National ID(s) found
+                  developer_message: The supplied BIC exists and has at least one
+                    National ID associated
+                national_ids:
+                - id: 50070010
+                  scheme: BLZ
+        "400":
+          description: Wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MBRI
+                  user_message: Wrong URL format
+                  developer_message: Missing BIC resource identifier
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding National ID found or BIC not found or wrong
+            URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.NNIF
+                  user_message: No corresponding National ID found
+                  developer_message: The supplied BIC does not exist or has no National
+                    ID associated
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bics/{bic}/reachability:
+    get:
+      tags:
+      - bics
+      summary: Validate SEPA reachability of a BIC.
+      description: "For a given BIC and SEPA payment scheme, you can validate that\
+        \ it can be reached for SEPA payments and return the SEPA channel CSM (Clearing\
+        \ and Settlement System) through which the bank owning the BIC can be reached;\
+        \ the response also returns the adherence BIC that signed the adherence agreement\
+        \ with the EPC and the intermediary institution's BIC (if applicable and available)"
+      operationId: getSepaReachabilityFromBic_v2
+      parameters:
+      - name: bic
+        in: path
+        description: BIC (8-characters or 11-characters) for which SEPA reachability
+          is requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DEUTDEFFXXX
+      - name: sepa_scheme
+        in: query
+        description: SEPA service code
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: SDD
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Payment channel(s) found with the supplied BIC and scheme
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_10'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.PCFB
+                  user_message: Payment channel(s) found with the supplied BIC and
+                    scheme
+                  developer_message: The supplied BIC exists and has at least one
+                    payment channel associated with the supplied SEPA scheme
+                  more_info: http://www.europeanpaymentscouncil.eu/index.cfm/sepa-direct-debit/what-is-a-payment-scheme/
+                payment_channels:
+                - id: EBAS
+                  member_type: DRCT
+        "400":
+          description: Invalid SEPA scheme parameter or wrong URL format or invalid
+            request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.ISSC
+                  user_message: Invalid SEPA scheme parameter
+                  developer_message: "SEPA scheme parameter not supplied, supplied\
+                    \ with a wrong parameter name or the SEPA scheme does not exist\
+                    \ (only SDD, SCT, SDB and SCTINST allowed)"
+                  more_info: http://www.europeanpaymentscouncil.eu/index.cfm/sepa-direct-debit/what-is-a-payment-scheme/
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No payment channel found with the supplied BIC and scheme or
+            wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.ICHA
+                  user_message: No payment channel found with the supplied BIC and
+                    scheme
+                  developer_message: The supplied BIC does not exist or has no payment
+                    channel associated with the supplied SEPA scheme
+                  more_info: http://www.europeanpaymentscouncil.eu/index.cfm/sepa-direct-debit/what-is-a-payment-scheme/
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/bics/{bic}/ssis:
+    get:
+      tags:
+      - bics
+      summary: Get SSIs for a BIC.
+      description: "For a given BIC, you can retrieve the Standing Settlement Instructions\
+        \ (SSIs) for that BIC, for a given currency, and (optionally) an SSI category\
+        \ (wholesale or retail)."
+      operationId: getSsisFromBic_v2
+      parameters:
+      - name: bic
+        in: path
+        description: BIC (8-characters or 11-characters) for which the corresponding
+          SSIs are requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DEUTDEFFXXX
+      - name: currency_code
+        in: query
+        description: A 3-character currency code for which SSI data needs to be retrieved
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: AED
+      - name: ssi_category
+        in: query
+        description: "Code that indicates the SSI category for which SSI data needs\
+          \ to be retrieved, that is COPA or WHLS"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: COPA
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: SSI(s) found with the supplied parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_11'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.SSIF
+                  user_message: SSI(s) found with the supplied parameters
+                  developer_message: The supplied BIC exists and has at least one
+                    SSI with the specified currency and category
+                  more_info: http://swiftref.swift.com/sites/sdcref/files/ssi_plus_v2_txt_files_tech_spec.pdf
+                ssis:
+                - owner_bic: DEUTDEFFXXX
+                  institution_name: DEUTSCHE BANK AG
+                  branch_information: Deutsche Bank Frankfurt F
+                  address:
+                    address_lines:
+                    - TAUNUSANLAGE 12
+                    town_name: FRANKFURT AM MAIN
+                    country_subdivision: HESSE
+                    post_code: 60262
+                    country_name: GERMANY
+                    country_code: DE
+                  currency_code: AED
+                  direct: true
+                  correspondent:
+                    bic: NBADAEAAVOS
+                    account: AE340350000000250007510
+                    preferred: false
+        "400":
+          description: Invalid currency parameter or invalid SSI category parameter
+            or wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.ICCY
+                  user_message: Invalid currency parameter
+                  developer_message: "Currency parameter not supplied, supplied with\
+                    \ a wrong parameter name or it does not exist (not ISO 4217-compliant)"
+                  more_info: ISO 4217
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No SSI matching the supplied parameters or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.NOSS
+                  user_message: No SSI matching the supplied parameters
+                  developer_message: The supplied BIC does not exist or has no SSI
+                    with the specified currency and category
+                  more_info: http://swiftref.swift.com/sites/sdcref/files/ssi_plus_v2_txt_files_tech_spec.pdf
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/national_ids/{national_id}:
+    get:
+      tags:
+      - nationalIds
+      summary: Get details of a National ID.
+      description: "For a given National ID, you can retrieve the details of that\
+        \ National ID, that is the bank name or business name, and the address. You\
+        \ must provide either a country code, or an indication to which scheme the\
+        \ National ID belongs."
+      operationId: getNationalIdDetails_v2
+      parameters:
+      - name: national_id
+        in: path
+        description: "National ID (a synonym for clearing code, routing code, sort\
+          \ code, bank and branch ID) for which details are requested"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: 50070010
+      - name: country_code
+        in: query
+        description: "The 2-character ISO 3166-1 country code of the country that\
+          \ issued the National ID (mandatory, when scheme parameter is not provided)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: DE
+      - name: scheme
+        in: query
+        description: "The scheme (a synonym for the National ID type) under which\
+          \ the National ID is defined (mandatory, when country_code parameter is\
+          \ not provided)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: BLZ
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      - name: only_local_language
+        in: query
+        description: Whether fields must be returned in local language
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+        example: true
+      responses:
+        "200":
+          description: Corresponding National ID(s) found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_12'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.NIDF
+                  user_message: Corresponding National ID found
+                  more_info: Bank Directory Plus V3 Technical Specifications
+                national_ids:
+                - id: 50070010
+                  scheme: BLZ
+                  institution_name: DEUTSCHE BANK AG
+                  branch_information: Deutsche Bank Frankfurt F
+                  address:
+                    address_lines:
+                    - TAUNUSANLAGE 12
+                    town_name: FRANKFURT AM MAIN
+                    country_subdivision: HESSE
+                    post_code: 60262
+                    country_name: GERMANY
+                    country_code: DE
+                  office_type: HO
+        "400":
+          description: Invalid scheme parameter or invalid country code parameter
+            or invalid parameters or wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.ICTP
+                  user_message: Invalid scheme parameter
+                  developer_message: Supplied scheme does not exist (/AN and /FN suffixes
+                    are not allowed)
+                  more_info: Bank Directory Plus V3 Technical Specifications
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding National ID found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.NNIF
+                  user_message: National ID not found
+                  more_info: Bank Directory Plus V3 Technical Specifications
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/national_ids/{national_id}/validity:
+    get:
+      tags:
+      - nationalIds
+      summary: Check the Validity of a National ID.
+      description: "With this API call, you can check whether a National ID format\
+        \ is correct and the value exists in SWIFT's list of National IDs; you need\
+        \ to provide the National ID, and either a country code, or an indication\
+        \ to which scheme this National ID belongs; in addition to v1, v2 of the API\
+        \ provides a country-specific validation of the National ID's format"
+      operationId: getNationalIdValidity_v2
+      parameters:
+      - name: national_id
+        in: path
+        description: "National ID (a synonym for clearing code, routing code, sort\
+          \ code, bank and branch ID) to validate"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: 50070010
+      - name: country_code
+        in: query
+        description: "The 2-character ISO 3166-1 country code of the country that\
+          \ issued the National ID (mandatory, when scheme parameter is not provided)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: DE
+      - name: scheme
+        in: query
+        description: "The scheme (a synonym for the National ID type) under which\
+          \ the National ID is defined (mandatory, when country_code parameter is\
+          \ not provided)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: BLZ
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: The National ID is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_13'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.VNID
+                  user_message: The National ID is valid
+                  developer_message: The National ID's existence is confirmed against
+                    SWIFT's list of National IDs. This implies the format is correct
+                    so it is not checked explicitly
+                  more_info: Bank Directory Plus V3 Technical Specifications
+                national_id: 50070010
+                scheme: BLZ
+                validity: VNID
+        "400":
+          description: Invalid scheme parameter or invalid country code parameter
+            or invalid parameters or wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.ICCP
+                  user_message: Invalid country code parameter
+                  developer_message: Supplied country code does not exist
+                  more_info: ISO 3166
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: "The National ID is formally invalid or is valid but it does\
+            \ not exist, or wrong URL format"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.INID
+                  user_message: The National ID format is valid but it does not exist
+                  developer_message: "The supplied National ID format matches the\
+                    \ generic expression [0-9A-Z]{2,15} but it does not exist"
+                  more_info: Bank Directory Plus V3 Technical Specifications
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/national_ids/{national_id}/bics:
+    get:
+      tags:
+      - nationalIds
+      summary: Get BICs of a National ID.
+      description: "For a given National ID, you can retrieve the BIC or the BICs\
+        \ of that National ID; you need to provide the National ID, and either a country\
+        \ code, or an indication to which scheme this National ID belongs"
+      operationId: getBicsFromNationalId_v2
+      parameters:
+      - name: national_id
+        in: path
+        description: "National ID (a synonym for clearing code, routing code, sort\
+          \ code, bank and branch ID) for which the corresponding BICs are requested"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: 50070010
+      - name: country_code
+        in: query
+        description: "The 2-character ISO 3166-1 country code of the country that\
+          \ issued the National ID (mandatory, when scheme parameter is not provided)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: DE
+      - name: scheme
+        in: query
+        description: "The scheme (a synonym for the National ID type) under which\
+          \ the National ID is defined (mandatory, when country_code parameter is\
+          \ not provided)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: BLZ
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding BIC(s) found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_14'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.BIWF
+                  user_message: Corresponding BIC(s) found
+                  developer_message: The supplied National ID exists with the supplied
+                    scheme and has at least one BIC associated
+                  more_info: Bank Directory Plus V3 Technical Specifications
+                bics:
+                - DEUTDEFFXXX
+        "400":
+          description: Invalid scheme parameter or invalid country code parameter
+            or invalid parameters or wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.ICTP
+                  user_message: Invalid scheme parameter
+                  developer_message: Supplied scheme does not exist
+                  more_info: Bank Directory Plus V3 Technical Specifications
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding BIC found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.BINF
+                  user_message: No corresponding BIC found
+                  developer_message: "The supplied National ID does not exist, does\
+                    \ not exist with the supplied scheme or country code or has no\
+                    \ BIC associated"
+                  more_info: Bank Directory Plus V3 Technical Specifications
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/country_codes/{country_code}/validity:
+    get:
+      tags:
+      - country_codes
+      summary: Check validity of a country code.
+      description: You can check whether a country code is correct and valid
+      operationId: getCountryCodeValidity_v2
+      parameters:
+      - name: country_code
+        in: path
+        description: "Country code (2-letters, 3-letters or 3-digits) to validate"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DE
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Valid country code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.VCOC
+                  user_message: The country code is valid
+                  developer_message: "The country code matches one of the three supported\
+                    \ formats (2a, 3a or 3n) and it exists"
+                  more_info: ISO 3166
+                country_code: IT
+                validity: VCOC
+        "400":
+          description: Invalid country code format or country code not supplied or
+            wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MCRI
+                  user_message: "The country code is not in one of the three supported\
+                    \ formats: 2a, 3a or 3n"
+                  more_info: ISO 3166
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: Invalid country code or country code not found or wrong URL
+            format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.ICOC
+                  user_message: The country code does not exist
+                  developer_message: "The country code matches one of the three supported\
+                    \ formats (2a, 3a or 3n), but it does not exist"
+                  more_info: ISO 3166
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/country_codes/{country_code}:
+    get:
+      tags:
+      - country_codes
+      summary: Get details of a country code.
+      description: "For a given country code, you can retrieve the details of that\
+        \ country code, that is the name, other codes and official currencies."
+      operationId: getCountryCodeDetails_v2
+      parameters:
+      - name: country_code
+        in: path
+        description: "Country code (2-letters, 3-letters or 3-digits) for which details\
+          \ are requested"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: DE
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding country code found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_16'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.COWF
+                  user_message: Valid country code
+                  developer_message: "The country code matches one of the three supported\
+                    \ formats (2a, 3a or 3n) and it exists"
+                  more_info: ISO 3166
+                name: ITALY
+                iso_2a_code: IT
+                iso_3a_code: ITA
+                iso_3n_code: 380
+                currencies:
+                - iso_3a_code: EUR
+                  iso_3n_code: 978
+                  name: EURO
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding country code found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.CONF
+                  user_message: Invalid country code
+                  more_info: ISO 3166
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/currency_codes/{currency_code}/validity:
+    get:
+      tags:
+      - currency_codes
+      summary: Check validity of a currency code.
+      description: You can check whether a currency code is correct and valid
+      operationId: getCurrencyCodeValidity_v2
+      parameters:
+      - name: currency_code
+        in: path
+        description: Currency code (3-letters or 3-digits) to validate
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: EUR
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Valid currency code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_17'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.VCUC
+                  user_message: The currency code is valid
+                  developer_message: The currency code matches one of the two supported
+                    formats (3a or 3n) and it exists
+                  more_info: ISO 4217
+                currency_code: EUR
+                validity: VCUC
+        "400":
+          description: Invalid currency code format or currency code not supplied
+            or wrong URL format or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MCRI
+                  user_message: "The currency code is not in one of the two supported\
+                    \ formats: 3a or 3n"
+                  more_info: ISO 4217
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: Invalid currency code or currency code not found or wrong URL
+            format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.ICUC
+                  user_message: The currency code does not exist
+                  developer_message: "The currency code matches one of the two supported\
+                    \ formats (3a or 3n), but it does not exist"
+                  more_info: ISO 4217
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/currency_codes/{currency_code}:
+    get:
+      tags:
+      - currency_codes
+      summary: Get details of a currency code.
+      description: "For a given currency code, you can retrieve the details of that\
+        \ currency code, that is the name, other codes, the fractional digits and\
+        \ the list of countries where the currency is used"
+      operationId: getCurrencyCodeDetails_v2
+      parameters:
+      - name: currency_code
+        in: path
+        description: Currency code (3-letters or 3-digits) for which details are requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: EUR
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding currency code found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.CUCF
+                  user_message: Valid currency code
+                  developer_message: The currency code matches one of the two supported
+                    formats (3a or 3n) and it exists
+                  more_info: ISO 4217
+                name: US DOLLAR
+                iso_3a_code: USD
+                iso_3n_code: 840
+                fractional_digits: 2
+                countries:
+                - iso_2a_code: AS
+                  iso_3a_code: ASM
+                  iso_3n_code: 16
+                  name: AMERICAN SAMOA
+                - iso_2a_code: BQ
+                  iso_3a_code: BES
+                  iso_3n_code: 535
+                  name: "BONAIRE, SINT EUSTATIUS AND SABA"
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding currency code found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.CCNF
+                  user_message: Invalid currency code
+                  more_info: ISO 4217
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/leis/{lei}/validity:
+    get:
+      tags:
+      - leis
+      summary: Check validity of a LEI.
+      description: You can check whether a LEI is correct and valid
+      operationId: getLeiValidity_v2
+      parameters:
+      - name: lei
+        in: path
+        description: LEI to validate
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: BFXS5XCH7N0Y05NIXW11
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Valid LEI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_19'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.VLEI
+                  user_message: Valid LEI
+                  developer_message: "LEI resource identifier matches expression [0-9A-Z]{20}\
+                    \ and it exists"
+                  more_info: ISO 17442
+                lei: BFXS5XCH7N0Y05NIXW11
+                validity: VLEI
+        "400":
+          description: Invalid LEI format or LEI not supplied or wrong URL format
+            or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.MCRI
+                  user_message: Wrong URL format
+                  developer_message: Missing LEI resource identifier
+                  more_info: ISO 17442
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: Invalid LEI or LEI not found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.ILEI
+                  user_message: Invalid LEI
+                  developer_message: "LEI resource identifier matches expression [0-9A-Z]{20},\
+                    \ but it does not exist"
+                  more_info: ISO 17442
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/leis/{lei}:
+    get:
+      tags:
+      - leis
+      summary: Get details of a LEI.
+      description: "For a given LEI, you can retrieve the details of that LEI"
+      operationId: getLeiDetails_v2
+      parameters:
+      - name: lei
+        in: path
+        description: LEI for which details are requested
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: BFXS5XCH7N0Y05NIXW11
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Corresponding LEI found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_20'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.LEWF
+                  user_message: LEI found
+                  developer_message: The LEI exists
+                  more_info: The LEI might be active or inactive (ISO 17442)
+                lei: BFXS5XCH7N0Y05NIXW11
+                legal_name: ABN AMRO Bank N.V.
+                address:
+                  street_address:
+                  - Gustav Mahlerlaan 10
+                  city: Amsterdam
+                  region: NL-NH
+                  postal_code: 1082 PP
+                  country_name: NETHERLANDS
+                head_quarters_address:
+                  street_address:
+                  - Gustav Mahlerlaan 10
+                  city: Amsterdam
+                  region: NL-NH
+                  postal_code: 1082 PP
+                  country_name: NETHERLANDS
+                legal_jurisdiction: NL
+                legal_form: NAAMLOZE VENNOOTSCHAP
+                entity_legal_form_code: B5PM
+                entity_status: ACTIVE
+                initial_registration_date: 2012-06-06
+                last_update_date: 2018-08-16
+                registration_status: ISSUED
+                associated:
+                  entity_type: FUND_FAMILY
+                  lei: W51AX6427FJZJFPF8H34
+                  entity_name: "EUROAGENTES GESTION SGIIC, S.A."
+                entity_expiration:
+                  date: 2018-04-17
+                  reason: DISSOLVED
+                successor:
+                  lei: CYZ5AAG3SVPY3KMG6Q07
+                  name: Specialplast Wensbo AB
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: No corresponding LEI found or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.LENF
+                  user_message: LEI not found
+                  developer_message: The LEI does not exist
+                  more_info: ISO 17442
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+  /v2/account_numbers/{account_number}/validity:
+    get:
+      tags:
+      - account_numbers
+      summary: "Check validity of account number formats, including IBANs."
+      description: "Check validity of account number formats, including IBANs, issued\
+        \ in almost any country in the world"
+      operationId: getAccountNumberValidity_v2
+      parameters:
+      - name: account_number
+        in: path
+        description: Account number to validate
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: X0542811101000000123456
+      - name: country_code
+        in: query
+        description: ISO 2-letter country code of the country where the account is
+          held
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: DE
+      - name: is_iban
+        in: query
+        description: Whether the account number must be handled as an IBAN
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: true
+      - name: usage
+        in: query
+        description: How the account number is used (only for a few countries)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - retail
+          - wholesale
+        example: retail
+      - name: national_id
+        in: query
+        description: "National ID (bank ID, clearing code, sort code, routing number)\
+          \ of the account holding institution"
+        required: false
+        style: form
+        explode: true
+        schema:
+          pattern: "^[0-9a-zA-Z]{2,20}$"
+          type: string
+        example: 542811101
+      - name: bic
+        in: query
+        description: BIC-8 or BIC-11 of the account holding institution
+        required: false
+        style: form
+        explode: true
+        schema:
+          pattern: "^[0-9a-zA-Z]{8}([0-9a-zA-Z]{3})?$"
+          type: string
+        example: DEUTDEFFXXX
+      - name: API-Status
+        in: header
+        description: "Whether status item must always be returned within responses\
+          \ (by default, positive responses do not report status)"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - verbose
+      responses:
+        "200":
+          description: Valid account number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_21'
+              example:
+                status:
+                  http: 200
+                  code: REDA.API.AVAL
+                  user_message: The account number (non-IBAN) is valid
+                  more_info: The country standard format is applied for validation
+                account_number: X0542811101000000123456
+                validity: AVAL
+        "400":
+          description: "Invalid parameters, required parameters not supplied or wrong\
+            \ URL format or invalid request"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 400
+                  code: REDA.API.INVP
+                  user_message: Invalid parameters
+                  developer_message: Either BIC or country code parameter must be
+                    supplied
+        "401":
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+        "404":
+          description: Invalid account format or invalid checksum or wrong URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 404
+                  code: REDA.API.ANCI
+                  user_message: "At least one account number checksum is invalid:\
+                    \ CHECKSUM"
+                  developer_message: At least one checksum is different from the calculated
+                    checksum
+        default:
+          description: You do not have sufficient privileges to execute this service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithStatus'
+              example:
+                status:
+                  http: 401
+                  code: REDA.API.ILIC
+                  user_message: You do not have sufficient privileges to execute this
+                    service
+                  developer_message: "Unallowed access (user account credentials not\
+                    \ provided, wrong user account credentials or user account without\
+                    \ permission)"
+components:
+  schemas:
+    WithShortStatus:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ShortStatus'
+    WithStatus:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+    WithStatusWithReliability:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusWithReliability'
+    ShortStatus:
+      required:
+      - code
+      - http
+      type: object
+      properties:
+        http:
+          type: string
+          description: A repeat of the HTTP status code
+        code:
+          type: string
+          description: "An error code or status code, unique across all SWIFT APIs"
+        user_message:
+          type: string
+          description: Provided in case your application needs to display a short
+            error message to a human end-user
+        developer_message:
+          type: string
+          description: A verbose description for a developer of the possible causes
+            of the error and the possible fixes
+        more_info:
+          type: string
+          description: "A hyperlink to an explanation of the error for developers,\
+            \ possibly with further pointers to community input"
+      example:
+        code: code
+        developer_message: developer_message
+        http: http
+        user_message: user_message
+        more_info: more_info
+    Status:
+      allOf:
+      - $ref: '#/components/schemas/ShortStatus'
+      - required:
+        - user_message
+    StatusWithReliability:
+      allOf:
+      - $ref: '#/components/schemas/Status'
+      - type: object
+        properties:
+          reliability:
+            maximum: 100
+            minimum: 0
+            type: integer
+    Address:
+      required:
+      - country_code
+      - country_name
+      type: object
+      properties:
+        address_lines:
+          type: array
+          description: "An array of maximum 4 lines (strings) expressing the street\
+            \ address of the BIC, e.g. street name, house number, building name and\
+            \ floor, area"
+          items:
+            type: string
+        post_office_box:
+          type: string
+          description: "Numbered box in a post office, assigned to a person or organisation,\
+            \ where letters are kept until called for"
+        town_name:
+          type: string
+          description: "Name of a built-up area, with defined boundaries, and a local\
+            \ government"
+        country_subdivision:
+          type: string
+          description: "Identifies a subdivision of a country (for example, state,\
+            \ region, county)"
+        post_code:
+          type: string
+          description: Identifier consisting of a group of letters and/or numbers
+            that is added to a postal address to assist the sorting of mail
+        country_name:
+          type: string
+          description: The country name in English of the institution/branch as indicated
+            in the ISO 3166 list
+        country_code:
+          type: string
+          description: The ISO 3166-1 alpha-2 code of the country of the institution/branch
+      additionalProperties: false
+      example:
+        country_code: country_code
+        address_lines:
+        - address_lines
+        - address_lines
+        town_name: town_name
+        post_office_box: post_office_box
+        post_code: post_code
+        country_name: country_name
+        country_subdivision: country_subdivision
+    Address2:
+      required:
+      - country_name
+      type: object
+      properties:
+        street_address:
+          type: array
+          items:
+            type: string
+        city:
+          type: string
+        region:
+          type: string
+        postal_code:
+          type: string
+        country_name:
+          type: string
+      additionalProperties: false
+    ContactDetails:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          description: "Collection of information that identifies a phone number,\
+            \ as defined by telecom services"
+        fax_number:
+          type: string
+          description: "Collection of information that identifies a FAX number, as\
+            \ defined by telecom services"
+        email_address:
+          type: string
+          description: Address for electronic mail (e-mail)
+        web_address:
+          type: string
+          description: "Address for the Universal Resource Locator (URL), that is\
+            \ used over the www (HTTP) service"
+      additionalProperties: false
+      example:
+        email_address: email_address
+        phone_number: phone_number
+        web_address: web_address
+        fax_number: fax_number
+    SwiftService:
+      required:
+      - code
+      - name
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code given by the service provider (SWIFT) to uniquely identify
+            a service it offers
+        name:
+          type: string
+          description: Name given by the service provider (SWIFT) to uniquely identify
+            a service it offers
+      additionalProperties: false
+      example:
+        code: code
+        name: name
+    SwiftConnectivity:
+      required:
+      - fileact
+      - fin
+      - interact
+      type: object
+      properties:
+        fin:
+          type: boolean
+          description: "True if connected to SWIFT FIN, false otherwise"
+        interact:
+          type: boolean
+          description: "True if used in at least one service on SWIFTNet InterAct,\
+            \ false otherwise"
+        fileact:
+          type: boolean
+          description: "True if used in at least one service on SWIFTNet FileAct,\
+            \ false otherwise"
+      additionalProperties: false
+      example:
+        interact: true
+        fin: true
+        fileact: true
+    SepaPaymentChannel:
+      required:
+      - id
+      - member_type
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id of the payment channel (SEPA-compliant CSM)
+        member_type:
+          type: string
+          description: "A payment channel has a member_type, the member_type has one\
+            \ of the codes DRCT, IDRC or UKWN"
+        direct_participant:
+          type: string
+          description: The BIC of the direct participant through which the indirectly
+            reachable BIC can be reached; it may only be present if the payment channel's
+            member is an indirect participant
+      additionalProperties: false
+      example:
+        member_type: member_type
+        direct_participant: direct_participant
+        id: id
+    NationalIdDetails:
+      required:
+      - id
+      - institution_name
+      - scheme
+      type: object
+      properties:
+        id:
+          type: string
+          description: National ID for which details were requested
+        scheme:
+          type: string
+          description: The scheme under which the National ID is defined
+        institution_name:
+          type: string
+          description: Name by which a party is known and which is usually used to
+            identify that party
+        branch_information:
+          type: string
+          description: A free text description of the branch as provided by the financial
+            institution to which it belongs; this is currently provided for entries
+            with a BIC when the financial institution concerned wants to provide this
+            extra information
+        address:
+          $ref: '#/components/schemas/Address'
+        contact_details:
+          $ref: '#/components/schemas/ContactDetails'
+        office_type:
+          type: string
+          description: Status of the entity in the office hierarchy
+      additionalProperties: false
+    NationalIdDetailsInLocalLanguage:
+      required:
+      - id
+      - institution_name
+      - scheme
+      type: object
+      properties:
+        id:
+          type: string
+          description: National ID for which details were requested
+        scheme:
+          type: string
+          description: The scheme under which the National ID is defined
+        institution_name:
+          type: string
+          description: Name by which a party is known and which is usually used to
+            identify that party
+        branch_information:
+          type: string
+          description: A free text description of the branch as provided by the financial
+            institution to which it belongs; this is currently provided for entries
+            with a BIC when the financial institution concerned wants to provide this
+            extra information
+        address:
+          $ref: '#/components/schemas/Address'
+        contact_details:
+          $ref: '#/components/schemas/ContactDetails'
+        office_type:
+          type: string
+          description: Status of the entity in the office hierarchy
+        language_iso_code_3:
+          pattern: "^[A-Z]{3}$"
+          type: string
+          description: ISO 639-2 code (three letters) of language
+          example: CHI
+        language_script_code_4:
+          pattern: "^[A-Z]{4}$"
+          type: string
+          description: ISO 15924 code (four letters) of language script
+          example: HANS
+      additionalProperties: false
+      example:
+        office_type: office_type
+        branch_information: branch_information
+        address:
+          country_code: country_code
+          address_lines:
+          - address_lines
+          - address_lines
+          town_name: town_name
+          post_office_box: post_office_box
+          post_code: post_code
+          country_name: country_name
+          country_subdivision: country_subdivision
+        scheme: scheme
+        language_script_code_4: HANS
+        contact_details:
+          email_address: email_address
+          phone_number: phone_number
+          web_address: web_address
+          fax_number: fax_number
+        id: id
+        institution_name: institution_name
+        language_iso_code_3: CHI
+    NationalId:
+      required:
+      - id
+      - scheme
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The National ID (a synonym for clearing code, routing code,\
+            \ sort code, bank and branch ID) of the institution or branch"
+        type:
+          type: string
+          description: "The type of National ID; if absent, it is the main National\
+            \ ID (MA), otherwise it is Foreign National ID (FN) or Alternative National\
+            \ ID (AN)"
+        scheme:
+          type: string
+          description: The scheme under which the National ID is defined
+      additionalProperties: false
+      example:
+        scheme: scheme
+        id: id
+        type: type
+    Ssi:
+      required:
+      - correspondent
+      - currency_code
+      - direct
+      - owner_bic
+      type: object
+      properties:
+        owner_bic:
+          type: string
+          description: The owner of the SSI Nostro Account
+        institution_name:
+          type: string
+          description: Name by which an institution is known and which is usually
+            used to identify that institution
+        branch_information:
+          type: string
+          description: A free text description of the branch as provided by the financial
+            institution to which it belongs; for the time being this will be provided
+            only for entries with a BIC and only when the financial institution concerned
+            wants to provide this extra information; the information is sourced from
+            the BIC Directory
+        address:
+          $ref: '#/components/schemas/Address'
+        currency_code:
+          type: string
+          description: The ISO 4217 currency code of the requested SSIs
+        direct:
+          type: boolean
+          description: "Indicates whether there is a direct account relationship between\
+            \ the owner of the SSI and the correspondent; if false, then this means\
+            \ at least the first intermediary must be present"
+        correspondent:
+          $ref: '#/components/schemas/CorrespondentBic'
+        first_intermediary:
+          $ref: '#/components/schemas/IntermediaryBic'
+        second_intermediary:
+          $ref: '#/components/schemas/IntermediaryBic'
+      additionalProperties: false
+      example:
+        owner_bic: owner_bic
+        branch_information: branch_information
+        address:
+          country_code: country_code
+          address_lines:
+          - address_lines
+          - address_lines
+          town_name: town_name
+          post_office_box: post_office_box
+          post_code: post_code
+          country_name: country_name
+          country_subdivision: country_subdivision
+        direct: true
+        second_intermediary: null
+        correspondent:
+          bic: bic
+          account: account
+          preferred: true
+        first_intermediary:
+          bic: bic
+          account: account
+        institution_name: institution_name
+        currency_code: currency_code
+    CorrespondentBic:
+      required:
+      - bic
+      type: object
+      properties:
+        bic:
+          type: string
+          description: Specifies the BIC
+        account:
+          type: string
+          description: The account for a given BIC
+        preferred:
+          type: boolean
+          description: "Indicates if it is a preferred correspondent, true (yes) or\
+            \ false (no)"
+      additionalProperties: false
+      example:
+        bic: bic
+        account: account
+        preferred: true
+    IntermediaryBic:
+      required:
+      - bic
+      type: object
+      properties:
+        bic:
+          type: string
+          description: Specifies the BIC
+        account:
+          type: string
+          description: The account for a given BIC
+      example:
+        bic: bic
+        account: account
+    Country:
+      required:
+      - iso_2a_code
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          description: The ISO country name
+        iso_2a_code:
+          pattern: "^[A-Z]{2}$"
+          type: string
+          description: The ISO 2-letters country code
+        iso_3a_code:
+          pattern: "^[A-Z]{3}$"
+          type: string
+          description: The ISO 3-letters country code
+        iso_3n_code:
+          pattern: "^[0-9]{3}$"
+          type: string
+          description: The ISO 3-digits country code
+        currencies:
+          type: array
+          description: A list of currencies used by the country
+          items:
+            $ref: '#/components/schemas/Country_currencies'
+      example:
+        name: ITALY
+        iso_2a_code: IT
+        iso_3a_code: ITA
+        iso_3n_code: 380
+        currencies:
+        - iso_3a_code: EUR
+          iso_3n_code: 978
+          name: EURO
+    Currency:
+      required:
+      - iso_3a_code
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          description: The ISO currency name
+        iso_3a_code:
+          pattern: "^[A-Z]{3}$"
+          type: string
+          description: The ISO 3-letters currency code
+        iso_3n_code:
+          pattern: "^[0-9]{3}$"
+          type: string
+          description: The ISO 3-digits currency code
+        fractional_digits:
+          type: integer
+          description: The number of fractional digits to use
+        countries:
+          type: array
+          description: A list of countries where the currency is used
+          items:
+            $ref: '#/components/schemas/Currency_countries'
+      example:
+        name: US DOLLAR
+        iso_3a_code: USD
+        iso_3n_code: 840
+        fractional_digits: 2
+        countries:
+        - iso_2a_code: AS
+          iso_3a_code: ASM
+          iso_3n_code: 16
+          name: AMERICAN SAMOA
+        - iso_2a_code: BQ
+          iso_3a_code: BES
+          iso_3n_code: 535
+          name: "BONAIRE, SINT EUSTATIUS AND SABA"
+    Lei:
+      required:
+      - legal_name
+      - lei
+      type: object
+      properties:
+        lei:
+          pattern: "^[0-9A-Za-z]{20}$"
+          type: string
+        legal_name:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address2'
+        head_quarters_address:
+          $ref: '#/components/schemas/Address2'
+        legal_jurisdiction:
+          type: string
+        legal_form:
+          type: string
+        entity_legal_form_code:
+          type: string
+        entity_status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+        initial_registration_date:
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          type: string
+        last_update_date:
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          type: string
+        registration_status:
+          type: string
+        associated:
+          $ref: '#/components/schemas/Lei_associated'
+        entity_expiration:
+          $ref: '#/components/schemas/Lei_entity_expiration'
+        successor:
+          $ref: '#/components/schemas/Lei_successor'
+      example:
+        lei: BFXS5XCH7N0Y05NIXW11
+        legal_name: ABN AMRO Bank N.V.
+        address:
+          street_address:
+          - Gustav Mahlerlaan 10
+          city: Amsterdam
+          region: NL-NH
+          postal_code: 1082 PP
+          country_name: NETHERLANDS
+        head_quarters_address:
+          street_address:
+          - Gustav Mahlerlaan 10
+          city: Amsterdam
+          region: NL-NH
+          postal_code: 1082 PP
+          country_name: NETHERLANDS
+        legal_jurisdiction: NL
+        legal_form: NAAMLOZE VENNOOTSCHAP
+        entity_legal_form_code: B5PM
+        entity_status: ACTIVE
+        initial_registration_date: 2012-06-06
+        last_update_date: 2018-08-16
+        registration_status: ISSUED
+        associated:
+          entity_type: FUND_FAMILY
+          lei: W51AX6427FJZJFPF8H34
+          entity_name: "EUROAGENTES GESTION SGIIC, S.A."
+        entity_expiration:
+          date: 2018-04-17
+          reason: DISSOLVED
+        successor:
+          lei: CYZ5AAG3SVPY3KMG6Q07
+          name: Specialplast Wensbo AB
+    inline_response_200:
+      required:
+      - iban
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        iban:
+          type: string
+          description: The IBAN that was validated
+        validity:
+          type: string
+          description: The code IVAL if the IBAN is valid
+      additionalProperties: false
+      example:
+        iban: iban
+        validity: validity
+        status: ""
+    inline_response_200_1:
+      required:
+      - bic
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        bic:
+          type: string
+          description: The BIC associated with the IBAN
+      additionalProperties: false
+      example:
+        bic: bic
+        status: ""
+    inline_response_200_2:
+      required:
+      - account_number
+      - bank_id
+      - checksum
+      - country_code
+      - iban
+      - length
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        iban:
+          type: string
+          description: The IBAN that was validated
+        country_code:
+          type: string
+          description: The ISO 3166-1 alpha-2 code of the country of the institution/branch.
+        checksum:
+          type: string
+          description: The checksum extracted from the IBAN
+        bank_id:
+          type: string
+          description: The BANK ID extracted from the IBAN. Its structure (bank ID
+            only or bank ID + branch ID) is as defined by the IBAN BIC LENGTH in the
+            IBANSTRUCTURE file.
+        branch_id:
+          type: string
+          description: Unique and unambiguous identification of a branch of a financial
+            institution.
+        account_number:
+          type: string
+          description: The remainder of the IBAN including the account number.
+        length:
+          type: integer
+          description: The length of the IBAN
+      additionalProperties: false
+      example:
+        country_code: country_code
+        account_number: account_number
+        branch_id: branch_id
+        bank_id: bank_id
+        iban: iban
+        checksum: checksum
+        length: 0
+        status: ""
+    inline_response_200_3:
+      required:
+      - bic
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ShortStatus'
+        bic:
+          type: string
+          description: The BIC associated with the IBAN national ID
+      additionalProperties: false
+      example:
+        bic: bic
+        status:
+          code: code
+          developer_message: developer_message
+          http: http
+          user_message: user_message
+          more_info: more_info
+    inline_response_200_4:
+      required:
+      - iban
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        iban:
+          type: string
+          description: The corresponding IBAN
+      additionalProperties: false
+      example:
+        iban: iban
+        status: ""
+    inline_response_200_5:
+      required:
+      - address
+      - bic
+      - institution_name
+      - swift_connectivity
+      - swift_services
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        bic:
+          type: string
+          description: The BIC of the institution on which more information is requested
+        institution_name:
+          type: string
+          description: Name by which a party is known and which is usually used to
+            identify that party
+        branch_information:
+          type: string
+          description: A free text description of the branch as provided by the financial
+            institution to which it belongs; this is currently provided for entries
+            with a BIC when the financial institution concerned wants to provide this
+            extra information
+        address:
+          $ref: '#/components/schemas/Address'
+        contact_details:
+          $ref: '#/components/schemas/ContactDetails'
+        office_type:
+          type: string
+          description: Status of the entity in the office hierarchy
+        swift_services:
+          type: array
+          description: A list of 3-character codes and names of SWIFT FIN service
+            codes (also called value added service codes)
+          items:
+            $ref: '#/components/schemas/SwiftService'
+        swift_connectivity:
+          $ref: '#/components/schemas/SwiftConnectivity'
+      additionalProperties: false
+      example:
+        office_type: office_type
+        swift_connectivity:
+          interact: true
+          fin: true
+          fileact: true
+        branch_information: branch_information
+        address:
+          country_code: country_code
+          address_lines:
+          - address_lines
+          - address_lines
+          town_name: town_name
+          post_office_box: post_office_box
+          post_code: post_code
+          country_name: country_name
+          country_subdivision: country_subdivision
+        contact_details:
+          email_address: email_address
+          phone_number: phone_number
+          web_address: web_address
+          fax_number: fax_number
+        bic: bic
+        institution_name: institution_name
+        swift_services:
+        - code: code
+          name: name
+        - code: code
+          name: name
+        status: ""
+    inline_response_200_6:
+      required:
+      - bic
+      - effective_date
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        bic:
+          type: string
+          description: The BIC that was validated
+        validity:
+          type: string
+          description: The code VBIC if the BIC is valid
+        effective_date:
+          type: string
+          description: "A date in YYYY-MM-DD format to indicate explicitly on which\
+            \ date the BIC is confirmed to be valid; the timezone is always UTC, hence\
+            \ the \"Z\" suffix will always be present, in compliance with ISO 8601\
+            \ / RFC 3339"
+      additionalProperties: false
+      example:
+        effective_date: effective_date
+        validity: validity
+        bic: bic
+        status: ""
+    inline_response_200_7:
+      required:
+      - lei
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        lei:
+          type: string
+          description: The corresponding LEI for a given BIC
+      additionalProperties: false
+      example:
+        lei: lei
+        status: ""
+    inline_response_200_8:
+      required:
+      - bic
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        bic:
+          type: string
+          description: The corresponding BIC for a given LEI
+      additionalProperties: false
+      example:
+        bic: bic
+        status: ""
+    inline_response_200_9:
+      required:
+      - national_ids
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        national_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/NationalId'
+      additionalProperties: false
+      example:
+        national_ids:
+        - scheme: scheme
+          id: id
+          type: type
+        - scheme: scheme
+          id: id
+          type: type
+        status: ""
+    inline_response_200_10:
+      required:
+      - payment_channels
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        payment_channels:
+          type: array
+          description: SEPA CSM through which the BIC is reachable for the supplied
+            SEPA scheme
+          items:
+            $ref: '#/components/schemas/SepaPaymentChannel'
+        adherence_bic:
+          type: string
+          description: Adherence BIC11 of the reachable BIC
+      additionalProperties: false
+      example:
+        payment_channels:
+        - member_type: member_type
+          direct_participant: direct_participant
+          id: id
+        - member_type: member_type
+          direct_participant: direct_participant
+          id: id
+        status: ""
+        adherence_bic: adherence_bic
+    inline_response_200_11:
+      required:
+      - ssis
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        ssis:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ssi'
+      additionalProperties: false
+      example:
+        ssis:
+        - owner_bic: owner_bic
+          branch_information: branch_information
+          address:
+            country_code: country_code
+            address_lines:
+            - address_lines
+            - address_lines
+            town_name: town_name
+            post_office_box: post_office_box
+            post_code: post_code
+            country_name: country_name
+            country_subdivision: country_subdivision
+          direct: true
+          second_intermediary: null
+          correspondent:
+            bic: bic
+            account: account
+            preferred: true
+          first_intermediary:
+            bic: bic
+            account: account
+          institution_name: institution_name
+          currency_code: currency_code
+        - owner_bic: owner_bic
+          branch_information: branch_information
+          address:
+            country_code: country_code
+            address_lines:
+            - address_lines
+            - address_lines
+            town_name: town_name
+            post_office_box: post_office_box
+            post_code: post_code
+            country_name: country_name
+            country_subdivision: country_subdivision
+          direct: true
+          second_intermediary: null
+          correspondent:
+            bic: bic
+            account: account
+            preferred: true
+          first_intermediary:
+            bic: bic
+            account: account
+          institution_name: institution_name
+          currency_code: currency_code
+        status: ""
+    inline_response_200_12:
+      required:
+      - national_ids
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        national_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/NationalIdDetailsInLocalLanguage'
+      additionalProperties: false
+      example:
+        national_ids:
+        - office_type: office_type
+          branch_information: branch_information
+          address:
+            country_code: country_code
+            address_lines:
+            - address_lines
+            - address_lines
+            town_name: town_name
+            post_office_box: post_office_box
+            post_code: post_code
+            country_name: country_name
+            country_subdivision: country_subdivision
+          scheme: scheme
+          language_script_code_4: HANS
+          contact_details:
+            email_address: email_address
+            phone_number: phone_number
+            web_address: web_address
+            fax_number: fax_number
+          id: id
+          institution_name: institution_name
+          language_iso_code_3: CHI
+        - office_type: office_type
+          branch_information: branch_information
+          address:
+            country_code: country_code
+            address_lines:
+            - address_lines
+            - address_lines
+            town_name: town_name
+            post_office_box: post_office_box
+            post_code: post_code
+            country_name: country_name
+            country_subdivision: country_subdivision
+          scheme: scheme
+          language_script_code_4: HANS
+          contact_details:
+            email_address: email_address
+            phone_number: phone_number
+            web_address: web_address
+            fax_number: fax_number
+          id: id
+          institution_name: institution_name
+          language_iso_code_3: CHI
+        status: ""
+    inline_response_200_13:
+      required:
+      - national_id
+      - scheme
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        national_id:
+          type: string
+          description: The National ID that was validated
+        scheme:
+          type: string
+          description: The scheme under which the National ID is defined
+        validity:
+          type: string
+          description: Contains the code VNID (Valid National ID) if the National
+            ID is valid in the provided scheme or country
+      additionalProperties: false
+      example:
+        national_id: national_id
+        scheme: scheme
+        validity: validity
+        status: ""
+    inline_response_200_14:
+      required:
+      - bics
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        bics:
+          type: array
+          description: An array of the corresponding BICs
+          items:
+            type: string
+      additionalProperties: false
+      example:
+        bics:
+        - bics
+        - bics
+        status: ""
+    inline_response_200_15:
+      required:
+      - country_code
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        country_code:
+          type: string
+          description: The country code that was validated
+        validity:
+          type: string
+          description: The code VCOC if the country code is valid
+      additionalProperties: false
+      example:
+        country_code: country_code
+        validity: validity
+        status: ""
+    inline_response_200_16:
+      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/WithStatus'
+      - $ref: '#/components/schemas/Country'
+    inline_response_200_17:
+      required:
+      - currency_code
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        currency_code:
+          type: string
+          description: The currency code that was validated
+        validity:
+          type: string
+          description: The code VCUC if the currency code is valid
+      additionalProperties: false
+      example:
+        validity: validity
+        currency_code: currency_code
+        status: ""
+    inline_response_200_18:
+      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/WithStatus'
+      - $ref: '#/components/schemas/Currency'
+    inline_response_200_19:
+      required:
+      - lei
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        lei:
+          type: string
+          description: The LEI that was validated
+        validity:
+          type: string
+          description: The code VLEI if the LEI is valid
+      additionalProperties: false
+      example:
+        lei: lei
+        validity: validity
+        status: ""
+    inline_response_200_20:
+      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/WithStatus'
+      - $ref: '#/components/schemas/Lei'
+    inline_response_200_21:
+      required:
+      - account_number
+      - validity
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        account_number:
+          type: string
+          description: The account number that was validated
+        validity:
+          type: string
+          description: The code AVAL if the account number is valid
+      additionalProperties: false
+      example:
+        account_number: account_number
+        validity: validity
+        status: ""
+    Country_currencies:
+      required:
+      - iso_3a_code
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          description: The ISO currency name
+        iso_3a_code:
+          pattern: "^[A-Z]{3}$"
+          type: string
+          description: The ISO 3-letters currency code
+        iso_3n_code:
+          pattern: "^[0-9]{3}$"
+          type: string
+          description: The ISO 3-digits currency code
+    Currency_countries:
+      required:
+      - iso_2a_code
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          description: The ISO country name
+        iso_2a_code:
+          pattern: "^[A-Z]{2}$"
+          type: string
+          description: The ISO 2-letters country code
+        iso_3a_code:
+          pattern: "^[A-Z]{3}$"
+          type: string
+          description: The ISO 3-letters country code
+        iso_3n_code:
+          pattern: "^[0-9]{3}$"
+          type: string
+          description: The ISO 3-digits country code
+    Lei_associated:
+      type: object
+      properties:
+        entity_type:
+          type: string
+        lei:
+          pattern: "^[0-9A-Za-z]{20}$"
+          type: string
+        entity_name:
+          type: string
+    Lei_entity_expiration:
+      type: object
+      properties:
+        date:
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          type: string
+        reason:
+          type: string
+    Lei_successor:
+      type: object
+      properties:
+        lei:
+          pattern: "^[0-9A-Za-z]{20}$"
+          type: string
+        name:
+          type: string
+  responses:
+    Unallowed:
+      description: You do not have sufficient privileges to execute this service
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WithStatus'
+          example:
+            status:
+              http: 401
+              code: REDA.API.ILIC
+              user_message: You do not have sufficient privileges to execute this
+                service
+              developer_message: "Unallowed access (user account credentials not provided,\
+                \ wrong user account credentials or user account without permission)"
+  parameters:
+    apiStatusParameter:
+      name: API-Status
+      in: header
+      description: "Whether status item must always be returned within responses (by\
+        \ default, positive responses do not report status)"
+      required: false
+      style: simple
+      explode: false
+      schema:
+        type: string
+        enum:
+        - verbose
+  securitySchemes:
+    oAuth2Password:
+      type: oauth2
+      description: "OAuth 2.0 Password Grant Type. Used between an end API consumers\
+        \ and SWIFT API Gateway. Please note Username := <swift.com license_id>, Password\
+        \ := <swift.com license_key >"
+      flows:
+        password:
+          tokenUrl: https://api.swift.com/oauth2/v1/token
+          scopes:
+            urn:swiftref:external: SWIFTRef API external customers access
+            urn:swiftref:internal: Grants access to Payment Validation only
