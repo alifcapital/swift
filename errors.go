@@ -12,7 +12,7 @@ func NotFound(err error) bool {
 	if !httpError.NotFound() {
 		return false
 	}
-	return httpError.NotFound()
+	return true
 }
 
 type ErrWithHTTPResponse struct {
@@ -23,6 +23,9 @@ type ErrWithHTTPResponse struct {
 func NewErrWithHTTPResponse(HTTPResponse *http.Response, err error) error {
 	if err == nil {
 		return nil
+	}
+	if HTTPResponse == nil {
+		return err
 	}
 	return &ErrWithHTTPResponse{HTTPResponse: HTTPResponse, Err: err}
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func (api *API) invokeToken(ctx context.Context, path string, urlValues url.Valu
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK {
-		return nil, NewErrWithHTTPResponse(response, err)
+		return nil, NewErrWithHTTPResponse(response, errors.New("not ok"))
 	}
 	var token AuthenticationToken
 	if err := json.Unmarshal(b.Bytes(), &token); err != nil {

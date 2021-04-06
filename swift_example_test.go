@@ -28,6 +28,8 @@ func ExampleNewAPI() {
 		return
 	}
 	_ = bicDetails
+	// Output:
+	//
 }
 
 func ExampleAPI_WithContext() {
@@ -58,4 +60,6 @@ func ExampleAPI_WithContext() {
 		// ...
 	}
 	_, _ = bankingAnalytics, httpResponse
+	// Output:
+	//
 }
