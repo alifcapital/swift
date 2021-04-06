@@ -15,9 +15,7 @@ import (
 	"fmt"
 	"github.com/antihax/optional"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 )
@@ -88,12 +86,6 @@ func (a *BicsApiService) GetBicDetailsV2(ctx context.Context, bic string, localV
 	if err != nil || localVarHttpResponse == nil {
 		return localVarReturnValue, localVarHttpResponse, err
 	}
-
-	out, err := httputil.DumpRequestOut(r, true)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(string(out))
 
 	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
