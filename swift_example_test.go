@@ -20,11 +20,14 @@ func ExampleNewAPI() {
 
 	bicDetails, err := swiftAPI.GetBicDetails(context.Background(), "DEUTDEFF")
 	if err != nil {
-		if swift.NotFound(err) {
+		switch {
+		case swift.NotFound(err):
 			log.Println("no such bic")
-			return
+		case swift.UnAuthorized(err):
+			log.Println("unauthorized")
+		default:
+			log.Println("getting bic details:", err)
 		}
-		log.Println("getting bic details:", err)
 		return
 	}
 	_ = bicDetails

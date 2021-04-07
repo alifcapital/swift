@@ -9,10 +9,21 @@ func NotFound(err error) bool {
 	if !ok {
 		return false
 	}
-	if !httpError.NotFound() {
+	if httpError.NotFound() {
+		return true
+	}
+	return false
+}
+
+func UnAuthorized(err error) bool {
+	httpError, ok := err.(*ErrWithHTTPResponse)
+	if !ok {
 		return false
 	}
-	return true
+	if httpError.UnAuthorized() {
+		return true
+	}
+	return false
 }
 
 type ErrWithHTTPResponse struct {
@@ -28,6 +39,10 @@ func NewErrWithHTTPResponse(HTTPResponse *http.Response, err error) error {
 		return err
 	}
 	return &ErrWithHTTPResponse{HTTPResponse: HTTPResponse, Err: err}
+}
+
+func (e *ErrWithHTTPResponse) UnAuthorized() bool {
+	return e.HTTPResponse.StatusCode == http.StatusUnauthorized
 }
 
 func (e *ErrWithHTTPResponse) NotFound() bool {
