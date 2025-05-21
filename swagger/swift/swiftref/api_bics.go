@@ -68,9 +68,9 @@ type GetBicDetailsV5Response struct {
 		AddressLine3 string `json:"address_line_3"`
 	} `json:"unstructured_address"`
 	SwiftConnectivity struct {
-		Fin      string `json:"fin"`
-		Interact string `json:"interact"`
-		Fileact  string `json:"fileact"`
+		Fin      bool `json:"fin"`
+		Interact bool `json:"interact"`
+		Fileact  bool `json:"fileact"`
 		Finplus  struct {
 			Future string `json:"future"`
 			Live   string `json:"live"`
