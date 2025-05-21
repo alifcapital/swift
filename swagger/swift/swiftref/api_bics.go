@@ -40,6 +40,163 @@ type BicsApiGetBicDetailsV2Opts struct {
 	APIStatus optional.String
 }
 
+type GetBicDetailsV5Response struct {
+	Bic               string `json:"bic"`
+	Name              string `json:"name"`
+	StructuredAddress struct {
+		CountryCode            string `json:"country_code"`
+		CountryName            string `json:"country_name"`
+		StreetName             string `json:"street_name"`
+		BuildingNumber         string `json:"building_number"`
+		BuildingName           string `json:"building_name"`
+		PostBox                string `json:"post_box"`
+		Floor                  string `json:"floor"`
+		Room                   string `json:"room"`
+		PostCode               string `json:"post_code"`
+		TownName               string `json:"town_name"`
+		TownLocationName       string `json:"town_location_name"`
+		DistrictName           string `json:"district_name"`
+		CountrySubdivisionName string `json:"country_subdivision_name"`
+		CountrySubdivisionCode string `json:"country_subdivision_code"`
+	} `json:"structured_address"`
+	OfficeType          string `json:"office_type"`
+	Department          string `json:"department"`
+	SubDepartment       string `json:"sub_department"`
+	UnstructuredAddress struct {
+		AddressLine1 string `json:"address_line_1"`
+		AddressLine2 string `json:"address_line_2"`
+		AddressLine3 string `json:"address_line_3"`
+	} `json:"unstructured_address"`
+	SwiftConnectivity struct {
+		Fin      string `json:"fin"`
+		Interact string `json:"interact"`
+		Fileact  string `json:"fileact"`
+		Finplus  struct {
+			Future string `json:"future"`
+			Live   string `json:"live"`
+			Pilot  string `json:"pilot"`
+		} `json:"finplus"`
+	} `json:"swift_connectivity"`
+	SwiftServices []struct {
+		Code string `json:"code"`
+		Name string `json:"name"`
+	} `json:"swift_services"`
+	SwiftType string `json:"swift_type"`
+	UtcOffset string `json:"utc_offset"`
+}
+
+func (a *BicsApiService) GetBicDetailsV5(ctx context.Context, bic string, localVarOptionals *BicsApiGetBicDetailsV2Opts) (GetBicDetailsV5Response, *http.Response, error) {
+	var (
+		localVarHttpMethod  = strings.ToUpper("Get")
+		localVarPostBody    interface{}
+		localVarFileName    string
+		localVarFileBytes   []byte
+		localVarReturnValue GetBicDetailsV5Response
+	)
+
+	// create path and map variables
+	localVarPath := a.client.cfg.BasePath + "/v5/bics/{bic}"
+	localVarPath = strings.Replace(localVarPath, "{"+"bic"+"}", fmt.Sprintf("%v", bic), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHttpContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHttpContentType := selectHeaderContentType(localVarHttpContentTypes)
+	if localVarHttpContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHttpContentType
+	}
+
+	// to determine the Accept header
+	localVarHttpHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
+	if localVarHttpHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHttpHeaderAccept
+	}
+	if localVarOptionals != nil && localVarOptionals.APIStatus.IsSet() {
+		localVarHeaderParams["API-Status"] = parameterToString(localVarOptionals.APIStatus.Value(), "")
+	}
+	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHttpMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHttpResponse, err := a.client.callAPI(r)
+	if err != nil || localVarHttpResponse == nil {
+		return localVarReturnValue, localVarHttpResponse, err
+	}
+
+	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarHttpResponse.Body.Close()
+	if err != nil {
+		return localVarReturnValue, localVarHttpResponse, err
+	}
+
+	if localVarHttpResponse.StatusCode < 300 {
+		// If we succeed, return the data, otherwise pass on to decode error.
+		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+		if err == nil {
+			return localVarReturnValue, localVarHttpResponse, err
+		}
+	}
+
+	if localVarHttpResponse.StatusCode >= 300 {
+		newErr := GenericSwaggerError{
+			body:  localVarBody,
+			error: localVarHttpResponse.Status,
+		}
+		if localVarHttpResponse.StatusCode == 200 {
+			var v InlineResponse2005
+			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHttpResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHttpResponse, newErr
+		}
+		if localVarHttpResponse.StatusCode == 401 {
+			var v WithStatus
+			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHttpResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHttpResponse, newErr
+		}
+		if localVarHttpResponse.StatusCode == 404 {
+			var v WithStatus
+			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHttpResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHttpResponse, newErr
+		}
+		if localVarHttpResponse.StatusCode == 0 {
+			var v WithStatus
+			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHttpResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHttpResponse, newErr
+		}
+		return localVarReturnValue, localVarHttpResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHttpResponse, nil
+}
+
 func (a *BicsApiService) GetBicDetailsV2(ctx context.Context, bic string, localVarOptionals *BicsApiGetBicDetailsV2Opts) (InlineResponse2005, *http.Response, error) {
 	var (
 		localVarHttpMethod  = strings.ToUpper("Get")
@@ -50,7 +207,7 @@ func (a *BicsApiService) GetBicDetailsV2(ctx context.Context, bic string, localV
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/v5/bics/{bic}"
+	localVarPath := a.client.cfg.BasePath + "/v2/bics/{bic}"
 	localVarPath = strings.Replace(localVarPath, "{"+"bic"+"}", fmt.Sprintf("%v", bic), -1)
 
 	localVarHeaderParams := make(map[string]string)
