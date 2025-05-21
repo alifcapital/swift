@@ -6,7 +6,7 @@ import (
 	"github.com/antihax/optional"
 )
 
-func (api *API) GetBicDetailsV5(ctx context.Context, BIC string) (*swiftref.InlineResponse2005, error) {
+func (api *API) GetBicDetailsV5(ctx context.Context, BIC string) (*swiftref.GetBicDetailsV5Response, error) {
 
 	r, httpResponse, err := api.Reference.BicsApi.
 		GetBicDetailsV5(api.WithContext(ctx, swiftref.ContextOAuth2), BIC, &swiftref.BicsApiGetBicDetailsV2Opts{APIStatus: optional.NewString("APIStatus")})
